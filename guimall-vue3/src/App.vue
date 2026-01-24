@@ -1,10 +1,16 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import router from './router';
+
+  // js代码，setup标识通常和组合式API搭配使用，用于告诉Vue需要再编译时进行一些处理，让我们可以更简洁地使用组合式 API
+  //引入自定义组件
+// import HelloWorld from './components/HelloWorld.vue'
+// import TheWelcome from './components/TheWelcome.vue'
 </script>
 
 <template>
-  <header>
+  <!-- html代码 -->
+   <router-view></router-view>
+  <!-- <header>
     <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
 
     <div class="wrapper">
@@ -14,11 +20,12 @@ import TheWelcome from './components/TheWelcome.vue'
 
   <main>
     <TheWelcome />
-  </main>
+  </main> -->
 </template>
 
 <style scoped>
-header {
+  /* css代码，scoped表示节点内css样式只针对此组件有效，不影响其他组件 */
+/* header {
   line-height: 1.5;
 }
 
@@ -43,5 +50,5 @@ header {
     place-items: flex-start;
     flex-wrap: wrap;
   }
-}
+} */
 </style>

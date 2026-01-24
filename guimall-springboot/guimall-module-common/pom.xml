@@ -14,6 +14,18 @@
     <description>weblog-module-common(此模块用于存放一些通用的功能)</description>
 
     <dependencies>
+<!--        Mybatis Plus-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+        </dependency>
+
+<!--        mysql依赖-->
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+        </dependency>
+
 <!--        免写冗余的Java样板式代码-->
         <dependency>
             <groupId>org.projectlombok</groupId>

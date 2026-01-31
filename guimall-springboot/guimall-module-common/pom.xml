@@ -14,6 +14,12 @@
     <description>weblog-module-common(此模块用于存放一些通用的功能)</description>
 
     <dependencies>
+<!--        p6spy-->
+        <dependency>
+            <groupId>p6spy</groupId>
+            <artifactId>p6spy</artifactId>
+        </dependency>
+
 <!--        Mybatis Plus-->
         <dependency>
             <groupId>com.baomidou</groupId>

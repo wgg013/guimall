@@ -218,7 +218,7 @@ import {
   getNewProducts,
   getRecommendProducts
 } from '@/api/frontend/product'
-import { isMemberLoggedIn, getMemberInfo, getMemberId, removeMemberInfo } from '@/composables/member'
+import { isMemberLoggedIn, removeMemberInfo, refreshMemberInfo } from '@/composables/member'
 import { removeMemberToken } from '@/composables/cookie'
 import { useCartStore } from '@/stores/cart'
 import { useMemberLevelStore } from '@/stores/memberLevel'
@@ -233,32 +233,13 @@ const memberLoggedIn = ref(isMemberLoggedIn())
 const memberNickname = ref('')
 const memberAvatar = ref('')
 
-// const initMemberStatus = () => {
-//   memberLoggedIn.value = isMemberLoggedIn()
-//   if (memberLoggedIn.value) {
-//     const info = getMemberInfo()
-//     memberNickname.value = info?.nickname || info?.username || '会员'
-//     memberAvatar.value = info?.icon || ''
-//   }
-// }
-
-const initMemberStatus = () => {
+const initMemberStatus = async () => {
   memberLoggedIn.value = isMemberLoggedIn()
 
   if (memberLoggedIn.value) {
-
-    // 获取会员ID
-    const memberId = getMemberId()
-
-    // 请求会员信息接口
-    getMemberDetail(memberId).then(res => {
-
-      const info = res.data
-
-      memberNickname.value = info?.nickname || info?.username || '会员'
-      memberAvatar.value = info?.icon || ''
-
-    })
+    const info = await refreshMemberInfo()
+    memberNickname.value = info?.nickname || info?.username || '会员'
+    memberAvatar.value = info?.icon || ''
   }
 }
 

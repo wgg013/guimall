@@ -87,8 +87,7 @@
         <div v-for="farmer in farmers" :key="farmer.id"
              class="flex-none w-[280px] bg-white rounded-[2.5rem] p-8 border border-stone-100 shadow-sm hover:shadow-xl transition-all duration-500">
           <div class="flex items-start gap-4 mb-6">
-            <img :src="farmer.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + farmer.name"
-                 class="w-16 h-16 rounded-2xl border-2 border-emerald-100 object-cover" />
+            <FarmerAvatar :src="farmer.avatar" :seed="farmer.name" img-class="w-16 h-16 rounded-2xl border-2 border-emerald-100 object-cover" />
             <div class="min-w-0 min-h-[52px]">
               <h3 class="text-xl font-black text-stone-900">{{ farmer.name }}</h3>
               <p class="text-stone-400 text-sm leading-5 min-h-[40px] line-clamp-2">{{ farmer.city }}{{ farmer.region }}</p>
@@ -103,6 +102,12 @@
             <span v-if="!farmer.certType" class="text-xs font-bold bg-stone-50 text-stone-400 px-3 py-1 rounded-full">签约农户</span>
           </div>
           <p class="text-xs text-stone-400 font-bold">主营：{{ farmer.mainProduct || '暂无信息' }}</p>
+          <button
+            @click="openFarmerContact(farmer)"
+            class="mt-4 w-full px-4 py-2.5 bg-stone-100 text-stone-700 rounded-xl text-sm font-bold hover:bg-stone-200 transition-all"
+          >
+            联系农户
+          </button>
         </div>
       </div>
       <div v-else class="py-12 text-center text-stone-300 font-bold">暂无签约农户信息</div>
@@ -196,6 +201,8 @@
         </div>
       </div>
     </footer>
+
+    <FarmerContactModal v-model="showContact" :farmer="selectedFarmer" />
   </div>
 </template>
 
@@ -208,6 +215,8 @@ import { removeMemberToken } from '@/composables/cookie'
 import { useCartStore } from '@/stores/cart'
 import { useMemberLevelStore } from '@/stores/memberLevel'
 import MemberBadge from '@/components/MemberBadge.vue'
+import FarmerAvatar from '@/components/FarmerAvatar.vue'
+import FarmerContactModal from '@/components/FarmerContactModal.vue'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -245,6 +254,22 @@ const keyword = ref('')
 // 农户
 const farmers = ref([])
 const farmerScrollRef = ref(null)
+const showContact = ref(false)
+const selectedFarmer = ref({
+  id: '',
+  name: '',
+  farmName: '',
+  avatar: '',
+  phone: '',
+  province: '',
+  city: '',
+  region: '',
+  detailAddress: '',
+  mainProduct: '',
+  description: '',
+  certType: '',
+  certDesc: ''
+})
 
 // 商品
 const productList = ref([])
@@ -292,6 +317,24 @@ const handleSearch = () => {
 
 const viewDetail = (id) => router.push(`/product/detail?id=${id}`)
 const goTrace = (id) => router.push(`/trace/${id}`)
+const openFarmerContact = (farmer) => {
+  selectedFarmer.value = {
+    id: farmer?.id || '',
+    name: farmer?.name || '',
+    farmName: farmer?.farmName || '',
+    avatar: farmer?.avatar || '',
+    phone: farmer?.phone || '',
+    province: farmer?.province || '',
+    city: farmer?.city || '',
+    region: farmer?.region || '',
+    detailAddress: farmer?.detailAddress || '',
+    mainProduct: farmer?.mainProduct || '',
+    description: farmer?.description || '',
+    certType: farmer?.certType || '',
+    certDesc: farmer?.certDesc || ''
+  }
+  showContact.value = true
+}
 
 const scrollToProducts = () => {
   document.querySelector('#products')?.scrollIntoView({ behavior: 'smooth' })

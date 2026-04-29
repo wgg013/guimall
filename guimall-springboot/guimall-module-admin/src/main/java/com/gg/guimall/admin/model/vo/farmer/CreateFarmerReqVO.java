@@ -71,6 +71,15 @@ public class CreateFarmerReqVO {
     /** 农户介绍 */
     private String description;
 
+    @Length(max = 200)
+    private String certType;
+
+    @Length(max = 500)
+    private String certDesc;
+
+    @Length(max = 1000)
+    private String certPic;
+
     /** 状态：0禁用 1启用 */
     private Integer status;
 

@@ -10,10 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * @author wly
- * @url www.gg.com
- * @date 2026/3/12
- * @description: 农户详情响应 VO
+ * 农户详情响应 VO
  */
 @Data
 @Builder
@@ -57,6 +54,15 @@ public class FindFarmerDetailRspVO {
 
     /** 农户介绍 */
     private String description;
+
+    /** 认证类型 */
+    private String certType;
+
+    /** 认证描述 */
+    private String certDesc;
+
+    /** 认证图片 */
+    private String certPic;
 
     /** 状态：0禁用 1启用 */
     private Integer status;

@@ -49,6 +49,8 @@ public class SupportServiceImpl implements SupportService {
                         .province(f.getProvince())
                         .city(f.getCity())
                         .region(f.getRegion())
+                        .detailAddress(f.getDetailAddress())
+                        .phone(f.getPhone())
                         .mainProduct(f.getMainProduct())
                         .description(f.getDescription())
                         .certType(f.getCertType())

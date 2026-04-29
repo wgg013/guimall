@@ -75,6 +75,9 @@ public class FarmerServiceImpl implements FarmerService {
                 .detailAddress(createFarmerReqVO.getDetailAddress())
                 .mainProduct(createFarmerReqVO.getMainProduct())
                 .description(createFarmerReqVO.getDescription())
+                .certType(createFarmerReqVO.getCertType())
+                .certDesc(createFarmerReqVO.getCertDesc())
+                .certPic(createFarmerReqVO.getCertPic())
                 .status(Objects.nonNull(createFarmerReqVO.getStatus()) ? createFarmerReqVO.getStatus() : 1)
                 .build();
 
@@ -247,6 +250,9 @@ public class FarmerServiceImpl implements FarmerService {
                 .detailAddress(updateFarmerReqVO.getDetailAddress())
                 .mainProduct(updateFarmerReqVO.getMainProduct())
                 .description(updateFarmerReqVO.getDescription())
+                .certType(updateFarmerReqVO.getCertType())
+                .certDesc(updateFarmerReqVO.getCertDesc())
+                .certPic(updateFarmerReqVO.getCertPic())
                 .status(updateFarmerReqVO.getStatus())
                 .build();
 

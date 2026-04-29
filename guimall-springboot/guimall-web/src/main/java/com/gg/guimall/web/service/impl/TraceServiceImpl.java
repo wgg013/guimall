@@ -147,7 +147,17 @@ public class TraceServiceImpl implements TraceService {
 
         rspVO.setFarmerId(productDO.getFarmerId());
         rspVO.setFarmerName(Objects.nonNull(farmerDO) ? farmerDO.getName() : null);
+        rspVO.setFarmerAvatar(Objects.nonNull(farmerDO) ? farmerDO.getAvatar() : null);
         rspVO.setFarmerPhone(Objects.nonNull(farmerDO) ? farmerDO.getPhone() : null);
+        rspVO.setFarmerFarmName(Objects.nonNull(farmerDO) ? farmerDO.getFarmName() : null);
+        rspVO.setFarmerProvince(Objects.nonNull(farmerDO) ? farmerDO.getProvince() : null);
+        rspVO.setFarmerCity(Objects.nonNull(farmerDO) ? farmerDO.getCity() : null);
+        rspVO.setFarmerRegion(Objects.nonNull(farmerDO) ? farmerDO.getRegion() : null);
+        rspVO.setFarmerDetailAddress(Objects.nonNull(farmerDO) ? farmerDO.getDetailAddress() : null);
+        rspVO.setFarmerMainProduct(Objects.nonNull(farmerDO) ? farmerDO.getMainProduct() : null);
+        rspVO.setFarmerDescription(Objects.nonNull(farmerDO) ? farmerDO.getDescription() : null);
+        rspVO.setFarmerCertType(Objects.nonNull(farmerDO) ? farmerDO.getCertType() : null);
+        rspVO.setFarmerCertDesc(Objects.nonNull(farmerDO) ? farmerDO.getCertDesc() : null);
 
         if (Objects.nonNull(originDO)) {
             rspVO.setOriginId(originDO.getId());

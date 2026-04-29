@@ -8,9 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 助农专区 - 签约农户展示 VO（前台）
- *
- * @author wly
+ * 助农专区农户展示 VO（前台）
  */
 @Data
 @Builder
@@ -39,6 +37,12 @@ public class SupportFarmerRspVO {
 
     @ApiModelProperty(value = "区/县")
     private String region;
+
+    @ApiModelProperty(value = "详细地址")
+    private String detailAddress;
+
+    @ApiModelProperty(value = "联系电话")
+    private String phone;
 
     @ApiModelProperty(value = "主营产品")
     private String mainProduct;

@@ -30,6 +30,28 @@ public class FindPmsProductDetailRspVO {
 
     private String farmerName;
 
+    private String farmerAvatar;
+
+    private String farmerPhone;
+
+    private String farmerFarmName;
+
+    private String farmerProvince;
+
+    private String farmerCity;
+
+    private String farmerRegion;
+
+    private String farmerDetailAddress;
+
+    private String farmerMainProduct;
+
+    private String farmerDescription;
+
+    private String farmerCertType;
+
+    private String farmerCertDesc;
+
     private String name;
 
     private String subTitle;

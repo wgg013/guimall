@@ -1,7 +1,6 @@
 package com.gg.guimall.web.service.impl;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.gg.guimall.common.domain.dos.PmsFarmerDO;
 import com.gg.guimall.common.domain.dos.PmsProductCategoryDO;
 import com.gg.guimall.common.domain.dos.PmsProductDO;
 import com.gg.guimall.common.domain.dos.PmsProductParamDO;
@@ -207,6 +206,17 @@ public class PmsProductServiceImpl implements PmsProductService {
             PmsFarmerDO farmer = pmsFarmerMapper.selectById(productDO.getFarmerId());
             if (farmer != null) {
                 rspVO.setFarmerName(farmer.getName());
+                rspVO.setFarmerAvatar(farmer.getAvatar());
+                rspVO.setFarmerPhone(farmer.getPhone());
+                rspVO.setFarmerFarmName(farmer.getFarmName());
+                rspVO.setFarmerProvince(farmer.getProvince());
+                rspVO.setFarmerCity(farmer.getCity());
+                rspVO.setFarmerRegion(farmer.getRegion());
+                rspVO.setFarmerDetailAddress(farmer.getDetailAddress());
+                rspVO.setFarmerMainProduct(farmer.getMainProduct());
+                rspVO.setFarmerDescription(farmer.getDescription());
+                rspVO.setFarmerCertType(farmer.getCertType());
+                rspVO.setFarmerCertDesc(farmer.getCertDesc());
             }
         }
 

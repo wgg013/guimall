@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="min-h-screen bg-[#FDFCF8] text-[#2D3436] font-sans pb-20">
     <!-- Navigation (Matches existing Index.vue style) -->
     <nav class="bg-white/90 backdrop-blur-md border-b border-stone-200 sticky top-0 z-50">
@@ -73,7 +73,7 @@
 
               <div class="border-t border-stone-100 pt-8 flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                  <img :src="farmer.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Farmer'" class="w-16 h-16 rounded-2xl border-2 border-emerald-100 p-0.5" />
+                  <FarmerAvatar :src="farmer.avatar" :seed="farmer.name" img-class="w-16 h-16 rounded-2xl border-2 border-emerald-100 p-0.5" />
                   <div>
                     <h3 class="text-xl font-black text-stone-900">{{ farmer.name }}</h3>
                     <p class="text-stone-500 font-medium">{{ farmer.farmName }} · 签约种植户</p>
@@ -115,7 +115,9 @@
                <div class="grid grid-cols-2 gap-6">
                   <div v-for="cert in certifications" :key="cert.name" class="flex items-center gap-3">
                      <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center">
-                        <img :src="cert.icon" class="w-6 h-6" />
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path :d="cert.iconPath" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" />
+                        </svg>
                      </div>
                      <span class="text-sm font-bold text-stone-700">{{ cert.name }}</span>
                   </div>
@@ -213,12 +215,12 @@
 
     <!-- 联系农户弹窗 -->
     <div v-if="showContact" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" @click.self="showContact = false">
-      <div class="bg-white rounded-[2.5rem] p-10 shadow-2xl w-full max-w-md mx-4 relative">
+      <div class="bg-white rounded-[2.5rem] p-10 shadow-2xl w-full max-w-2xl mx-4 relative max-h-[85vh] overflow-y-auto overflow-x-hidden overscroll-contain farmer-scroll" @wheel.stop>
         <button @click="showContact = false" class="absolute top-6 right-6 w-10 h-10 bg-stone-100 rounded-xl flex items-center justify-center text-stone-400 hover:bg-stone-200 transition-all">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/></svg>
         </button>
         <div class="flex items-center gap-4 mb-8">
-          <img :src="farmer.avatar || 'https://api.dicebear.com/7.x/avataaars/svg?seed=Farmer'" class="w-16 h-16 rounded-2xl border-2 border-emerald-100" />
+          <FarmerAvatar :src="farmer.avatar" :seed="farmer.name" img-class="w-16 h-16 rounded-2xl border-2 border-emerald-100" />
           <div>
             <h3 class="text-2xl font-black text-stone-900">{{ farmer.name }}</h3>
             <p class="text-stone-400">{{ farmer.farmName }}</p>
@@ -237,6 +239,32 @@
           <div v-else class="p-5 bg-stone-50 rounded-2xl text-center text-stone-400 font-bold">
             暂未提供联系方式
           </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="p-4 bg-stone-50 rounded-2xl">
+              <p class="text-xs text-stone-400 font-bold mb-1">所在地区</p>
+              <p class="text-sm text-stone-700 font-semibold">{{ farmerLocation || '暂无' }}</p>
+            </div>
+            <div class="p-4 bg-stone-50 rounded-2xl">
+              <p class="text-xs text-stone-400 font-bold mb-1">详细地址</p>
+              <p class="text-sm text-stone-700 font-semibold">{{ farmer.detailAddress || '暂无' }}</p>
+            </div>
+            <div class="p-4 bg-stone-50 rounded-2xl">
+              <p class="text-xs text-stone-400 font-bold mb-1">主营产品</p>
+              <p class="text-sm text-stone-700 font-semibold">{{ farmer.mainProduct || '暂无' }}</p>
+            </div>
+            <div class="p-4 bg-stone-50 rounded-2xl">
+              <p class="text-xs text-stone-400 font-bold mb-1">认证类型</p>
+              <p class="text-sm text-stone-700 font-semibold">{{ farmer.certType || '暂无' }}</p>
+            </div>
+          </div>
+          <div class="p-4 bg-stone-50 rounded-2xl">
+            <p class="text-xs text-stone-400 font-bold mb-1">认证说明</p>
+            <p class="text-sm text-stone-700">{{ farmer.certDesc || '暂无' }}</p>
+          </div>
+          <div class="p-4 bg-stone-50 rounded-2xl">
+            <p class="text-xs text-stone-400 font-bold mb-1">农户简介</p>
+            <p class="text-sm text-stone-700 leading-6">{{ farmer.description || '暂无' }}</p>
+          </div>
           <p class="text-xs text-stone-300 text-center">点击电话号码可直接拨打 · 平台已对农户资质进行审核</p>
         </div>
       </div>
@@ -245,7 +273,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getTraceDetail } from '@/api/frontend/product'
 import { isMemberLoggedIn, removeMemberInfo, refreshMemberInfo } from '@/composables/member'
@@ -253,6 +281,7 @@ import { removeMemberToken } from '@/composables/cookie'
 import { useCartStore } from '@/stores/cart'
 import { useMemberLevelStore } from '@/stores/memberLevel'
 import MemberBadge from '@/components/MemberBadge.vue'
+import FarmerAvatar from '@/components/FarmerAvatar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -299,7 +328,15 @@ const farmer = ref({
   name: '加载中...',
   farmName: '',
   avatar: '',
-  phone: ''
+  phone: '',
+  province: '',
+  city: '',
+  region: '',
+  detailAddress: '',
+  mainProduct: '',
+  description: '',
+  certType: '',
+  certDesc: ''
 })
 
 const showContact = ref(false)
@@ -331,6 +368,10 @@ const originInfoMap = computed(() => {
   return map
 })
 
+const farmerLocation = computed(() => {
+  return `${farmer.value.province || ''}${farmer.value.city || ''}${farmer.value.region || ''}`
+})
+
 const loadTraceDetail = async () => {
   loading.value = true
   try {
@@ -349,9 +390,17 @@ const loadTraceDetail = async () => {
       farmer.value = {
         id: data.farmerId,
         name: data.farmerName || '签约农户',
-        farmName: (data.originName || '桂林') + '助农基地',
-        avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (data.farmerName || 'Farmer'),
-        phone: data.farmerPhone || ''
+        farmName: data.farmerFarmName || ((data.originName || '桂林') + '助农基地'),
+        avatar: data.farmerAvatar || ('https://api.dicebear.com/7.x/avataaars/svg?seed=' + (data.farmerName || 'Farmer')),
+        phone: data.farmerPhone || '',
+        province: data.farmerProvince || '',
+        city: data.farmerCity || '',
+        region: data.farmerRegion || '',
+        detailAddress: data.farmerDetailAddress || '',
+        mainProduct: data.farmerMainProduct || '',
+        description: data.farmerDescription || '',
+        certType: data.farmerCertType || '',
+        certDesc: data.farmerCertDesc || ''
       }
 
       origin.value = {
@@ -390,11 +439,19 @@ const loadTraceDetail = async () => {
 }
 
 const certifications = [
-  { name: '中国地理标志', icon: 'http://175.178.0.51:9000/weblog-gq/农场品地理标志.png' },
-  { name: '绿色食品认证', icon: 'http://175.178.0.51:9000/weblog-gq/绿色食品认证.png' },
-  { name: '有机农产品', icon: 'http://175.178.0.51:9000/weblog-gq/有机农产品.png' },
-  { name: '助农帮扶', icon: 'http://175.178.0.51:9000/weblog-gq//nongchanpin.png' }
+  { name: '中国地理标志', iconPath: 'M12 3l2.4 4.86L20 8.7l-4 3.9.95 5.54L12 15.6l-4.95 2.54L8 12.6l-4-3.9 5.6-.84L12 3z' },
+  { name: '绿色食品认证', iconPath: 'M5 21c8 0 14-6 14-14-8 0-14 6-14 14zm0 0c0-4 3-7 7-7' },
+  { name: '有机农产品', iconPath: 'M12 4v16m8-8H4m3-7c1.5 0 3 1 3 3s-1.5 3-3 3-3-1-3-3 1.5-3 3-3zm10 8c1.5 0 3 1 3 3s-1.5 3-3 3-3-1-3-3 1.5-3 3-3z' },
+  { name: '助农帮扶', iconPath: 'M8 14l4 4 4-4m-8-6l4 4 4-4M3 12h2m14 0h2' }
 ]
+
+watch(showContact, (open) => {
+  document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onBeforeUnmount(() => {
+  document.body.style.overflow = ''
+})
 
 onMounted(() => {
   initMemberStatus()
@@ -419,5 +476,16 @@ h1, h2, h3 {
 /* 顶栏导航选中时显示下划线 */
 .nav-active span {
   width: 100% !important;
+}
+
+.farmer-scroll {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.farmer-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 </style>

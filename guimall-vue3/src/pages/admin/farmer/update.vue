@@ -1,6 +1,5 @@
 <template>
   <div class="p-2 box">
-
     <a-card :bordered="false" class="mb-5">
       <div class="flex flex-wrap items-center gap-4">
         <a-button class="flex items-center gap-1" @click="goBack">
@@ -21,7 +20,7 @@
         :wrapper-col="{ span: 14 }"
       >
         <a-form-item label="农户姓名" name="name" :required="true">
-          <a-input v-model:value="form.name" placeholder="请输入姓名" allow-clear />
+          <a-input v-model:value="form.name" placeholder="请输入农户姓名" allow-clear />
         </a-form-item>
 
         <a-form-item label="手机号" name="phone" :required="true">
@@ -126,12 +125,11 @@
         <a-button @click="goBack">取消</a-button>
       </div>
     </a-card>
-
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, onActivated, onDeactivated, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons-vue'
@@ -143,6 +141,8 @@ import regionData from '@/utils/regionData'
 const router = useRouter()
 const route = useRoute()
 const formRef = ref()
+const pageActive = ref(false)
+const isCurrentFarmerUpdateRoute = () => route.path === '/admin/farmer/update'
 
 const areaOptions = regionData
 const areaValue = ref([])
@@ -228,6 +228,8 @@ const setAreaValueFromForm = () => {
 }
 
 const loadDetail = async () => {
+  if (!isCurrentFarmerUpdateRoute()) return
+
   const id = Number(route.query.id)
   if (!id) {
     message.warning('缺少农户ID')
@@ -279,11 +281,27 @@ onMounted(async () => {
   if (originRsp?.success) {
     originOptions.value = originRsp.data || []
   }
-  await loadDetail()
+
+  if (isCurrentFarmerUpdateRoute()) {
+    pageActive.value = true
+    await loadDetail()
+  }
+})
+
+onActivated(async () => {
+  pageActive.value = true
+  if (isCurrentFarmerUpdateRoute()) {
+    await loadDetail()
+  }
+})
+
+onDeactivated(() => {
+  pageActive.value = false
 })
 
 // KeepAlive 场景下组件会复用，query.id 变化时需要重新拉取详情
 watch(() => route.query.id, (newId, oldId) => {
+  if (!pageActive.value || !isCurrentFarmerUpdateRoute()) return
   if (newId && newId !== oldId) {
     loadDetail()
   }

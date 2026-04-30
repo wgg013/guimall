@@ -2,18 +2,19 @@ package com.gg.guimall.admin.model.vo.pms;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
-/*@author:wgg
- * @url:www.gg.com
- * @date:2026/3/10
- * @description:创建商品请求 VO
- * */
+/**
+ * 创建商品请求 VO
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -43,7 +44,7 @@ public class PmsProductCreateReqVO {
     @ApiModelProperty(value = "商品主图")
     private String pic;
 
-    @ApiModelProperty(value = "商品相册图片（逗号分割）")
+    @ApiModelProperty(value = "商品相册图片（逗号分隔）")
     private String albumPics;
 
     @ApiModelProperty(value = "商品相册图片列表")
@@ -56,17 +57,17 @@ public class PmsProductCreateReqVO {
     @NotNull(message = "商品价格不能为空")
     private BigDecimal price;
 
-    @ApiModelProperty(value = "市场价/原价（划线价）")
+    @ApiModelProperty(value = "市场价/原价")
     private BigDecimal marketPrice;
 
     @ApiModelProperty(value = "库存")
     @NotNull(message = "库存不能为空")
     private Integer stock;
 
-    @ApiModelProperty(value = "单位（斤/箱/袋）")
+    @ApiModelProperty(value = "单位")
     private String unit;
 
-    @ApiModelProperty(value = "重量（克）")
+    @ApiModelProperty(value = "重量")
     private BigDecimal weight;
 
     @ApiModelProperty(value = "上架状态")
@@ -81,10 +82,10 @@ public class PmsProductCreateReqVO {
     @ApiModelProperty(value = "备注")
     private String note;
 
-    @ApiModelProperty(value = "是否新品推荐：0否 1是")
+    @ApiModelProperty(value = "是否新品")
     private Integer isNew;
 
-    @ApiModelProperty(value = "是否人气推荐：0否 1是")
+    @ApiModelProperty(value = "是否推荐")
     private Integer isRecommend;
 
     @ApiModelProperty(value = "商品详情HTML")
@@ -119,6 +120,12 @@ public class PmsProductCreateReqVO {
         @ApiModelProperty(value = "SKU图片")
         private String pic;
 
+        @ApiModelProperty(value = "规格名称（兼容字段）")
+        private String specKey;
+
+        @ApiModelProperty(value = "规格值（兼容字段）")
+        private String specValue;
+
         @ApiModelProperty(value = "规格列表")
         private List<SkuSpecItemVO> specs;
     }
@@ -128,11 +135,10 @@ public class PmsProductCreateReqVO {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SkuSpecItemVO {
-        @ApiModelProperty(value = "规格键")
+        @ApiModelProperty(value = "规格名")
         private String specKey;
 
         @ApiModelProperty(value = "规格值")
         private String specValue;
     }
-
 }

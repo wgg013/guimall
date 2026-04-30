@@ -326,7 +326,17 @@ const router = createRouter({
     // 指定路由的历史管理方式，hash 模式指的是 URL 的路径是通过 hash 符号（#）进行标识
     history: createWebHashHistory(),
     // routes: routes 的缩写
-    routes, 
+    routes,
+    // Keep browser history position; reset to top on normal navigations.
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        }
+        if (to.hash) {
+            return { el: to.hash, behavior: 'smooth' }
+        }
+        return { top: 0, left: 0 }
+    }
 })
 
 // ES6 模块导出语句，它用于将 router 对象导出，以便其他文件可以导入和使用这个对象

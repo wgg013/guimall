@@ -4,7 +4,7 @@
       <!-- 左侧图片 -->
       <img class="left-img animate__animated animate__bounceInLeft animate__fast" :src="leftImg" />
 
-      <!-- 右侧表单 -->
+      <!-- 右侧登录表单 -->
       <div class="form-wrapper animate__animated animate__bounceInRight animate__fast">
         <h1 class="title">hello !</h1>
         <p class="tips">欢迎来到 {{ title }}</p>
@@ -17,7 +17,7 @@
         >
           <!-- 用户名 -->
           <a-form-item name="username">
-            <a-input v-model:value="form.username" placeholder="请输入用户名" >
+            <a-input v-model:value="form.username" placeholder="请输入用户名">
               <template #prefix>
                 <UserOutlined />
               </template>
@@ -47,6 +47,7 @@
                   <SafetyOutlined />
                 </template>
               </a-input>
+              <!-- 点击验证码图片可刷新 -->
               <img class="code-img" :src="codeUrl" @click="changeCode" />
             </div>
           </a-form-item>
@@ -62,16 +63,17 @@
             登录
           </a-button>
 
-          <!-- 注册/忘记密码 -->
-          <!-- <div class="extra">
+          <!-- 注册/忘记密码入口（按需开启） -->
+          <!--
+          <div class="extra">
             <router-link to="/register">
               <a-button type="primary">注册</a-button>
             </router-link>
-
             <router-link to="/password">
               <a-button type="link">忘记密码</a-button>
             </router-link>
-          </div> -->
+          </div>
+          -->
         </a-form>
       </div>
     </div>
@@ -80,44 +82,46 @@
   </div>
 </template>
 
-<script setup >
+<script setup>
 import {
   UserOutlined,
   LockOutlined,
   SafetyOutlined,
 } from '@ant-design/icons-vue'
 import { login } from '@/api/admin/user'
-import { ref, reactive,onMounted,onBeforeUnmount } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 
 import leftImg from '@/assets/left_img_1.png'
-import { showMessage } from '@/composables/util';
-import { setToken } from '@/composables/cookie';
+import { showMessage } from '@/composables/util'
+import { setToken } from '@/composables/cookie'
 import { useUserStore } from '@/stores/user'
 
 const title = 'GuiMall'
 const router = useRouter()
-const route = useRoute()
 const userStore = useUserStore()
-//登录按钮加载
+
+// 登录按钮加载状态
 const loading = ref(false)
 
-//定义响应式的表单对象
+// 表单数据
 const form = reactive({
   username: '',
   password: '',
   verificationCode: '',
 })
-//表单引用
+
+// 表单实例引用
 const formRef = ref(null)
-//表单验证规则
+
+// 表单校验规则
 const rules = {
   username: [
     {
       required: true,
       message: '请输入用户名',
       trigger: 'blur',
-    }
+    },
   ],
   password: [
     {
@@ -132,99 +136,126 @@ const rules = {
       required: true,
       message: '请输入验证码',
       trigger: 'blur',
-    }
+    },
   ],
 }
 
-// 登录
+// 验证码长度
+const CAPTCHA_LEN = 4
+// 当前验证码明文（仅前端校验用）
+const generatedCode = ref('')
+// 验证码图片地址（data:image/svg+xml）
+const codeUrl = ref('')
+
+// 生成随机验证码文本
+const createCaptchaText = (len = CAPTCHA_LEN) => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let text = ''
+  for (let i = 0; i < len; i++) {
+    text += chars[Math.floor(Math.random() * chars.length)]
+  }
+  return text
+}
+
+// 将验证码文本绘制成 SVG，并转换为 data url
+const createCaptchaDataUrl = (text) => {
+  const w = 120
+  const h = 40
+  const bg = `hsl(${Math.floor(Math.random() * 360)}, 80%, 96%)`
+  const rotate = Math.floor(Math.random() * 11) - 5
+  const y = 27 + Math.floor(Math.random() * 5)
+
+  // 干扰线
+  const lines = Array.from({ length: 3 })
+    .map(() => {
+      const x1 = Math.floor(Math.random() * w)
+      const y1 = Math.floor(Math.random() * h)
+      const x2 = Math.floor(Math.random() * w)
+      const y2 = Math.floor(Math.random() * h)
+      return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9fb6e9" stroke-width="1" />`
+    })
+    .join('')
+
+  // 干扰点
+  const dots = Array.from({ length: 20 })
+    .map(() => {
+      const x = Math.floor(Math.random() * w)
+      const y2 = Math.floor(Math.random() * h)
+      return `<circle cx="${x}" cy="${y2}" r="1" fill="#8aa4df" />`
+    })
+    .join('')
+
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <rect width="100%" height="100%" rx="6" ry="6" fill="${bg}" />
+  ${lines}
+  ${dots}
+  <text x="60" y="${y}" text-anchor="middle"
+        font-family="Arial, sans-serif" font-size="24"
+        letter-spacing="5" fill="#2c5cc5"
+        transform="rotate(${rotate}, 60, 20)">
+    ${text}
+  </text>
+</svg>`
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`
+}
+
+// 刷新验证码
+const changeCode = () => {
+  const text = createCaptchaText()
+  generatedCode.value = text
+  codeUrl.value = createCaptchaDataUrl(text)
+}
+
+// 登录提交
 const onSubmit = async () => {
   try {
-    //先做表单校验
+    // 先做表单必填/长度校验
     await formRef.value.validate()
 
-    //校验通过才会执行到这里
-    //开始加载
-    loading.value = true
-
-    //调用登录接口
-    const res = await login(form.username, form.password)
-
-    //判断是否成功
-    if (res.success === true) {
-      //存储Token到Cookie中
-      let token = res.data.token
-      setToken(token)
-      //获取用户信息，并存错到全局状态中
-      userStore.setUserInfo()
-      //提示登录成功
-      showMessage('登录成功', 'success')
-      //跳转到后台首页
-      router.push('/admin/index')
-    } else {
-      //获取服务端返回的错误消息
-      let message = res.message
-      //提示消息
-      showMessage(res.data.message, 'error')
+    // 再做验证码正确性校验
+    if (form.verificationCode.trim().toUpperCase() !== generatedCode.value) {
+      showMessage('验证码错误，请重试', 'error')
+      form.verificationCode = ''
+      changeCode()
+      return
     }
 
+    loading.value = true
+    const res = await login(form.username, form.password)
+
+    if (res.success === true) {
+      const token = res.data.token
+      setToken(token)
+      userStore.setUserInfo()
+      showMessage('登录成功', 'success')
+      router.push('/admin/index')
+    } else {
+      showMessage(res?.data?.message || res?.message || '登录失败', 'error')
+      changeCode()
+    }
   } catch (err) {
-    //校验失败会直接进 catch
     console.log('表单校验未通过', err)
-    //message.error('服务器异常，请稍后重试')
   } finally {
-    //结束加载
     loading.value = false
   }
 }
-// const onSubmit = () => {
-//     console.log('登录')
-//     login(form.username, form.password).then((res) => {
-//         console.log(res)
-//         // 判断是否成功
-//         if (res.data.success == true) {
-//             // 跳转到后台首页
-//             router.push('/admin/index')
-//         }
-//     })
-// }
 
-const codeUrl = ref('https://www.oschina.net/action/user/captcha')
-
-const changeCode = () => {
-  codeUrl.value = `https://www.oschina.net/action/user/captcha?${Date.now()}`
-}
-
-// const handleLogin = async () => {
-//   try {
-//     await formRef.value.validate()
-//     loading.value = true
-
-
-//     //模拟登录
-//     setTimeout(() => {
-//       loading.value = false
-//       message.success('登录成功')
-//       router.push('/')
-//     }, 1000)
-//   } catch (err) {
-//     console.log(err)
-//   }
-// }
-//按回车键后，执行登录事件
+// 回车键触发登录
 function onKeyUp(e) {
-  console.log(e)
   if (e.key === 'Enter') {
     onSubmit()
   }
 }
 
-//添加键盘监听
+// 页面挂载：初始化验证码 + 绑定键盘事件
 onMounted(() => {
-  console.log('添加键盘监听')
+  changeCode()
   document.addEventListener('keyup', onKeyUp)
 })
 
-//移除键盘监听
+// 页面卸载：移除键盘事件
 onBeforeUnmount(() => {
   document.removeEventListener('keyup', onKeyUp)
 })
@@ -246,7 +277,7 @@ onBeforeUnmount(() => {
   border-radius: 20px;
   display: flex;
   padding: 40px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .left-img {

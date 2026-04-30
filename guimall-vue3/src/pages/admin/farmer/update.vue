@@ -87,6 +87,19 @@
           <a-input v-model:value="form.mainProduct" placeholder="如：金桔、罗汉果" allow-clear />
         </a-form-item>
 
+        <a-form-item label="认证类型" name="certType">
+          <a-input v-model:value="form.certType" placeholder="如：地理标志,绿色食品" allow-clear />
+        </a-form-item>
+
+        <a-form-item label="认证说明" name="certDesc">
+          <a-textarea
+            v-model:value="form.certDesc"
+            :rows="2"
+            placeholder="如：国家地理标志保护产品"
+            allow-clear
+          />
+        </a-form-item>
+
         <a-form-item label="状态" name="status">
           <a-select v-model:value="form.status" placeholder="请选择" class="w-full">
             <a-select-option :value="1">启用</a-select-option>
@@ -125,7 +138,6 @@ import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { getFarmerDetail, updateFarmer } from '@/api/admin/farmer'
 import { fetchTraceOriginOptions } from '@/api/admin/traceOrigin'
 import { uploadFile } from '@/api/admin/upload'
-import { chinaAreaData } from '@/utils/chinaArea'
 import regionData from '@/utils/regionData'
 
 const router = useRouter()
@@ -153,6 +165,7 @@ const handleAvatarUpload = async ({ file, onSuccess, onError }) => {
     onError(e)
   }
 }
+
 const handleAvatarRemove = () => {
   form.avatar = ''
   avatarFileList.value = []
@@ -170,6 +183,9 @@ const form = reactive({
   detailAddress: '',
   avatar: '',
   mainProduct: '',
+  certType: '',
+  certDesc: '',
+  certPic: '',
   status: 1,
   createTime: '',
   description: '',
@@ -202,13 +218,12 @@ const handleAreaChange = (value) => {
   }
 }
 
-// 根据省市区回填级联选择器的值
+// 根据省市区回填级联选择器
 const setAreaValueFromForm = () => {
   if (!form.province || !form.city || !form.region) {
     areaValue.value = []
     return
   }
-  // regionData 的 value 就是省市区名称
   areaValue.value = [form.province, form.city, form.region]
 }
 
@@ -219,12 +234,14 @@ const loadDetail = async () => {
     goBack()
     return
   }
+
   const rsp = await getFarmerDetail(id)
   if (!rsp?.success || !rsp?.data) {
     message.error(rsp?.message || '获取农户详情失败')
     goBack()
     return
   }
+
   Object.assign(form, {
     id: rsp.data.id,
     name: rsp.data.name || '',
@@ -237,13 +254,18 @@ const loadDetail = async () => {
     detailAddress: rsp.data.detailAddress || '',
     avatar: rsp.data.avatar || '',
     mainProduct: rsp.data.mainProduct || '',
+    certType: rsp.data.certType || '',
+    certDesc: rsp.data.certDesc || '',
+    certPic: rsp.data.certPic || '',
     status: rsp.data.status ?? 1,
     createTime: rsp.data.createTime || '',
     description: rsp.data.description || '',
     originIds: rsp.data.originIds || []
   })
+
   // 回填级联选择器
   setAreaValueFromForm()
+
   // 回填头像
   if (form.avatar) {
     avatarFileList.value = [{ uid: '-1', name: '头像', status: 'done', url: form.avatar }]
@@ -260,7 +282,7 @@ onMounted(async () => {
   await loadDetail()
 })
 
-// KeepAlive 场景下组件会被复用，query.id 变化时需要重新拉取详情
+// KeepAlive 场景下组件会复用，query.id 变化时需要重新拉取详情
 watch(() => route.query.id, (newId, oldId) => {
   if (newId && newId !== oldId) {
     loadDetail()
@@ -274,13 +296,14 @@ const goBack = () => {
 // 保存按钮入参与后端 UpdateFarmerReqVO 字段严格对齐
 const handleSubmit = async () => {
   if (!formRef.value) return
+
   try {
     await formRef.value.validate()
   } catch {
     return
   }
 
-  // 验证地区是否已选择
+  // 校验地区是否已选择
   if (!form.province || !form.city || !form.region) {
     message.warning('请选择所在地区')
     return
@@ -298,15 +321,20 @@ const handleSubmit = async () => {
     region: form.region?.trim() || '',
     detailAddress: form.detailAddress?.trim() || '',
     mainProduct: form.mainProduct?.trim() || '',
+    certType: form.certType?.trim() || '',
+    certDesc: form.certDesc?.trim() || '',
+    certPic: form.certPic?.trim() || '',
     description: form.description?.trim() || '',
     status: form.status,
     originIds: form.originIds || []
   }
+
   const rsp = await updateFarmer(reqVO)
   if (!rsp?.success) {
     message.error(rsp?.message || '保存失败')
     return
   }
+
   message.success('保存成功')
   goBack()
 }

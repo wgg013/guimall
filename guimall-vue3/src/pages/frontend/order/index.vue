@@ -196,7 +196,6 @@ if (!isMemberLoggedIn()) {
   router.push('/member/login?redirect=/my-orders')
 }
 
-const memberId = getMemberId()
 const cartStore = useCartStore()
 
 const tabs = [
@@ -222,7 +221,19 @@ const total = ref(0)
 const currentPage = ref(1)
 const pageSize = ref(10)
 
+const requireMemberId = () => {
+  const id = getMemberId()
+  if (!id) {
+    message.warning('请先登录')
+    router.push('/member/login?redirect=/my-orders')
+    return null
+  }
+  return id
+}
+
 const loadOrders = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   loading.value = true
   try {
     const data = {
@@ -260,6 +271,8 @@ const handleCancelOrder = (orderId) => {
     cancelText: '我再想想',
     onOk: async () => {
       try {
+        const memberId = requireMemberId()
+        if (!memberId) return
         const res = await cancelOrder({ orderId, memberId })
         if (res.success) {
           message.success('订单已取消')
@@ -286,6 +299,8 @@ const handleConfirmReceipt = (orderId) => {
     cancelText: '取消',
     onOk: async () => {
       try {
+        const memberId = requireMemberId()
+        if (!memberId) return
         const res = await confirmReceipt(orderId, memberId)
         if (res.success) {
           message.success('已确认收货')

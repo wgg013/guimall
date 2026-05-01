@@ -293,13 +293,21 @@ if (!isMemberLoggedIn()) {
   router.push('/member/login?redirect=/checkout')
 }
 
-const memberId = getMemberId()
-
 const submitting = ref(false)
 const orderItems = ref([])
 const savedAddresses = ref([])
 const selectedAddressId = ref(null)
 const showManualInput = ref(false)
+
+const requireMemberId = () => {
+  const id = getMemberId()
+  if (!id) {
+    message.warning('请先登录')
+    router.push('/member/login?redirect=/checkout')
+    return null
+  }
+  return id
+}
 
 // 优惠券
 const availableCoupons = ref([])
@@ -360,6 +368,7 @@ const onIntegrationChange = (val) => {
 }
 
 const loadMemberIntegration = async () => {
+  const memberId = requireMemberId()
   if (!memberId) return
   try {
     const res = await getMemberInfoApi(memberId)
@@ -370,6 +379,7 @@ const loadMemberIntegration = async () => {
 }
 
 const loadMemberLevel = async () => {
+  const memberId = requireMemberId()
   if (!memberId) return
   try {
     const res = await getCurrentMemberLevel(memberId)
@@ -404,6 +414,7 @@ const toggleCoupon = (coupon) => {
 }
 
 const loadAvailableCoupons = async () => {
+  const memberId = requireMemberId()
   if (!memberId) return
   try {
     const res = await getOrderAvailableCoupons(memberId, totalAmount.value)
@@ -475,6 +486,7 @@ const toggleManualInput = () => {
 
 // 加载已有地址列表
 const loadAddresses = async () => {
+  const memberId = requireMemberId()
   if (!memberId) return
   try {
     const res = await getAddressList(memberId)
@@ -521,6 +533,8 @@ const validateAddress = () => {
 }
 
 const handleSubmit = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   if (!validateAddress()) return
   if (orderItems.value.length === 0) {
     message.warning('没有可结算的商品')

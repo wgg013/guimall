@@ -164,8 +164,6 @@ if (!isMemberLoggedIn()) {
   router.push('/member/login?redirect=/cart')
 }
 
-const memberId = getMemberId()
-
 const loading = ref(false)
 const cartList = ref([])
 
@@ -190,8 +188,20 @@ const calcTotal = () => {
   selectAll.value = cartList.value.length > 0 && cartList.value.every(i => i.selected)
 }
 
+const requireMemberId = () => {
+  const id = getMemberId()
+  if (!id) {
+    message.warning('请先登录')
+    router.push('/member/login?redirect=/cart')
+    return null
+  }
+  return id
+}
+
 // 加载购物车列表：请求后端接口，设置 loading 状态，初始化每项为选中
 const loadCart = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   loading.value = true // 开始加载，显示 loading 动画
   try {
     const res = await getCartList(memberId) // 调用接口获取当前用户的购物车列表
@@ -207,6 +217,8 @@ const loadCart = async () => {
 }
 
 const changeQuantity = async (item, delta) => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   const newQty = item.quantity + delta
   if (newQty < 1) return
   try {
@@ -220,6 +232,8 @@ const changeQuantity = async (item, delta) => {
 }
 
 const handleDelete = async (item) => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   try {
     const res = await deleteCartItems({ memberId, ids: [item.id] })
     if (res.success) {
@@ -233,6 +247,8 @@ const handleDelete = async (item) => {
 }
 
 const handleDeleteSelected = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   const selectedIds = cartList.value.filter(i => i.selected).map(i => i.id)
   if (selectedIds.length === 0) {
     message.warning('请先选择商品')

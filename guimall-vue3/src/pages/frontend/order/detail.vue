@@ -263,11 +263,20 @@ if (!isMemberLoggedIn()) {
   router.push('/member/login')
 }
 
-const memberId = getMemberId()
 const orderId = route.query.id
 
 const loading = ref(false)
 const orderDetail = ref(null)
+
+const requireMemberId = () => {
+  const id = getMemberId()
+  if (!id) {
+    message.warning('请先登录')
+    router.push('/member/login?redirect=/my-orders')
+    return null
+  }
+  return id
+}
 
 // 计算未归类的优惠差额（总额 + 运费 - 优惠券 - 促销 - 积分抵扣 - 实付）
 const otherDiscount = computed(() => {
@@ -292,6 +301,8 @@ const statusConfig = {
 }
 
 const loadOrderDetail = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   if (!orderId) {
     message.error('订单ID不能为空')
     router.back()
@@ -323,6 +334,8 @@ const handleCancelOrder = () => {
     cancelText: '我再想想',
     onOk: async () => {
       try {
+        const memberId = requireMemberId()
+        if (!memberId) return
         const res = await cancelOrder({ orderId: orderDetail.value.id, memberId })
         if (res.success) {
           message.success('订单已取消')
@@ -349,6 +362,8 @@ const handleConfirmReceipt = () => {
     cancelText: '取消',
     onOk: async () => {
       try {
+        const memberId = requireMemberId()
+        if (!memberId) return
         const res = await confirmReceipt(orderDetail.value.id, memberId)
         if (res.success) {
           message.success('已确认收货')

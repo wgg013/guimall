@@ -120,13 +120,22 @@ if (!isMemberLoggedIn()) {
   router.push('/member/login')
 }
 
-const memberId = getMemberId()
 const orderId = route.query.orderId
 
 const loading = ref(false)
 const submitting = ref(false)
 const orderDetail = ref(null)
 const returnReasons = ref([])
+
+const requireMemberId = () => {
+  const id = getMemberId()
+  if (!id) {
+    message.warning('请先登录')
+    router.push('/member/login?redirect=/my-orders')
+    return null
+  }
+  return id
+}
 
 const formData = ref({
   reason: undefined,
@@ -139,6 +148,8 @@ const formData = ref({
 })
 
 const loadOrderDetail = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   if (!orderId) {
     message.error('订单ID不能为空')
     router.back()
@@ -178,6 +189,8 @@ const loadReturnReasons = async () => {
 }
 
 const handleSubmit = async () => {
+  const memberId = requireMemberId()
+  if (!memberId) return
   if (!formData.value.reason) {
     message.warning('请选择退货原因')
     return

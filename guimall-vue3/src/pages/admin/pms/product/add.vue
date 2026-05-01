@@ -1,13 +1,12 @@
 <template>
   <div class="p-2 box">
-
     <a-card :bordered="false" class="mb-5">
       <div class="flex flex-wrap items-center gap-4">
         <a-button class="flex items-center gap-1" @click="goBack">
           <ArrowLeftOutlined />
           返回列表
         </a-button>
-        <span class="text-base font-semibold">添加商品</span>
+        <span class="text-base font-semibold">新增商品</span>
       </div>
     </a-card>
 
@@ -58,7 +57,7 @@
             accept="image/*"
           >
             <div v-if="picFileList.length === 0">
-              <plus-outlined />
+              <PlusOutlined />
               <div class="mt-2">上传图片</div>
             </div>
           </a-upload>
@@ -74,7 +73,7 @@
             multiple
           >
             <div>
-              <plus-outlined />
+              <PlusOutlined />
               <div class="mt-2">上传图片</div>
             </div>
           </a-upload>
@@ -84,7 +83,7 @@
           <a-input-number v-model:value="form.price" :min="0" :precision="2" class="w-full" />
         </a-form-item>
 
-        <a-form-item label="市场价">
+        <a-form-item label="市场价格">
           <a-input-number v-model:value="form.originalPrice" :min="0" :precision="2" class="w-full" />
         </a-form-item>
 
@@ -106,14 +105,13 @@
       </a-form>
     </a-card>
 
-    <!-- 商品参数 -->
     <a-card :bordered="false" title="商品参数" class="mt-5">
       <a-alert
         class="mb-4"
         type="info"
         show-icon
         banner
-        message="从参数字典中选择参数。如需添加新参数，请前往【参数管理】页面。"
+        message="从参数字典中选择参数。如需新增参数，请前往【参数管理】页面。"
       />
 
       <a-spin :spinning="paramLoading">
@@ -129,14 +127,13 @@
       </a-spin>
     </a-card>
 
-    <!-- SKU库存 -->
     <a-card title="SKU库存管理（必填）" class="mt-5">
       <a-alert
         class="mb-4"
         type="warning"
         show-icon
         banner
-        message="至少添加一个SKU规格，否则用户无法下单购买"
+        message="至少添加一个SKU规格，否则用户无法下单购买。"
       />
 
       <div class="mb-4">
@@ -150,28 +147,26 @@
         :pagination="false"
         bordered
       />
-
     </a-card>
 
-    <!-- 底部固定操作栏 -->
     <div class="fixed-bottom-bar">
       <a-button type="primary" @click="handleSubmit">提交</a-button>
       <a-button @click="goBack">取消</a-button>
     </div>
-
   </div>
 </template>
 
 <script setup>
 import { reactive, ref, h, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { message, Input, InputNumber, Button, Popconfirm, Spin, Checkbox } from 'ant-design-vue'
+import { message, Input, InputNumber, Button, Popconfirm, Checkbox } from 'ant-design-vue'
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons-vue'
 import { createProduct } from '@/api/admin/product'
+import { saveSkuList } from '@/api/admin/productSku'
 import { fetchProductCategoryOptions } from '@/api/admin/productCategory'
 import { fetchFarmerOptions } from '@/api/admin/farmer'
 import { uploadFile } from '@/api/admin/upload'
-import { fetchParamDefinitions, createParamDefinition } from '@/api/admin/paramDefinition'
+import { fetchParamDefinitions } from '@/api/admin/paramDefinition'
 import RichEditor from '@/components/RichEditor.vue'
 
 const router = useRouter()
@@ -182,10 +177,8 @@ const publishChecked = ref(false)
 const picFileList = ref([])
 const albumFileList = ref([])
 
-// SKU 管理
 const skuRows = ref([])
 
-// 动态参数行（模板驱动）
 const paramRows = ref([])
 const paramLoading = ref(false)
 const paramPagination = ref({
@@ -195,8 +188,37 @@ const paramPagination = ref({
   showSizeChanger: true,
   showTotal: total => `共 ${total} 条`
 })
-// 全局维护已选中的参数ID集合
 const selectedParamIds = ref(new Set())
+
+const rules = {
+  name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
+  productCategoryId: [{ required: true, message: '请选择商品分类', trigger: 'change' }],
+  farmerId: [{ required: true, message: '请选择关联农户', trigger: 'change' }],
+  productSn: [{ required: true, message: '请输入商品货号', trigger: 'blur' }],
+  price: [{ required: true, message: '请输入销售价格', trigger: 'change' }],
+  stock: [{ required: true, message: '请输入库存', trigger: 'change' }]
+}
+
+const form = reactive({
+  name: '',
+  productCategoryId: undefined,
+  farmerId: undefined,
+  productSn: '',
+  subTitle: '',
+  pic: '',
+  albumPics: '',
+  albumPicList: [],
+  price: undefined,
+  originalPrice: undefined,
+  stock: 0,
+  unit: '斤',
+  publishStatus: 0,
+  detailHtml: ''
+})
+
+const goBack = () => {
+  router.push('/admin/pms/product')
+}
 
 const handlePicUpload = async ({ file, onSuccess, onError }) => {
   try {
@@ -214,6 +236,7 @@ const handlePicUpload = async ({ file, onSuccess, onError }) => {
     onError(e)
   }
 }
+
 const handlePicRemove = () => {
   form.pic = ''
   picFileList.value = []
@@ -253,42 +276,11 @@ const handleAlbumUpload = async ({ file, onSuccess, onError }) => {
   }
 }
 
-const handleAlbumRemove = (file) => {
+const handleAlbumRemove = file => {
   albumFileList.value = albumFileList.value.filter(item => item.uid !== file.uid)
   syncAlbumFields()
 }
 
-const rules = {
-  name: [{ required: true, message: '请输入商品名称', trigger: 'blur' }],
-  productCategoryId: [{ required: true, message: '请选择商品分类', trigger: 'change' }],
-  farmerId: [{ required: true, message: '请选择关联农户', trigger: 'change' }],
-  productSn: [{ required: true, message: '请输入商品货号', trigger: 'blur' }],
-  price: [{ required: true, message: '请输入销售价格', trigger: 'change' }],
-  stock: [{ required: true, message: '请输入库存', trigger: 'change' }]
-}
-
-const form = reactive({
-  name: '',
-  productCategoryId: undefined,
-  farmerId: undefined,
-  productSn: '',
-  subTitle: '',
-  pic: '',
-  albumPics: '',
-  albumPicList: [],
-  price: undefined,
-  originalPrice: undefined,
-  stock: 0,
-  unit: '斤',
-  publishStatus: 0,
-  detailHtml: ''
-})
-
-const goBack = () => {
-  router.push('/admin/pms/product')
-}
-
-// 商品参数表格列（从字典选择）
 const paramColumns = [
   {
     title: '选择',
@@ -299,13 +291,11 @@ const paramColumns = [
         checked: record.selected,
         onChange: e => {
           record.selected = e.target.checked
-          // 同步更新全局选中集合
           if (e.target.checked) {
             selectedParamIds.value.add(record.paramId)
           } else {
             selectedParamIds.value.delete(record.paramId)
           }
-          console.log('Checkbox changed:', record.key, 'selected:', record.selected)
         }
       })
   },
@@ -321,7 +311,6 @@ const paramColumns = [
   }
 ]
 
-// 加载全局参数字典
 const loadAllParams = async () => {
   paramLoading.value = true
   try {
@@ -332,7 +321,6 @@ const loadAllParams = async () => {
 
     if (!rsp?.success) return
 
-    // PageResponse 的数据直接在 data 字段，不是 data.records
     const defs = rsp?.data || []
     paramPagination.value.total = rsp?.total || 0
 
@@ -340,29 +328,23 @@ const loadAllParams = async () => {
       paramId: d.id,
       key: d.paramName,
       value: d.paramValue,
-      selected: selectedParamIds.value.has(d.id) // 从全局集合判断是否选中
+      selected: selectedParamIds.value.has(d.id)
     }))
   } finally {
     paramLoading.value = false
   }
 }
 
-// 分页切换
-const handleParamTableChange = (pagination) => {
+const handleParamTableChange = pagination => {
   paramPagination.value.current = pagination.current
   paramPagination.value.pageSize = pagination.pageSize
   loadAllParams()
 }
 
-// 构建 productParams 数组（只提交已勾选的参数ID）
 const buildProductParams = () => {
-  const result = Array.from(selectedParamIds.value).map(paramId => ({ paramId }))
-  console.log('buildProductParams - selectedParamIds:', selectedParamIds.value)
-  console.log('buildProductParams - result:', result)
-  return result
+  return Array.from(selectedParamIds.value).map(paramId => ({ paramId }))
 }
 
-// SKU 表格列
 const skuColumns = [
   {
     title: '规格名称',
@@ -448,12 +430,11 @@ const skuColumns = [
       h(
         Popconfirm,
         {
-          title: '确认删除?',
+          title: '确认删除？',
           onConfirm: () => handleDeleteSku(record)
         },
         {
-          default: () =>
-            h(Button, { danger: true, size: 'small' }, () => '删除')
+          default: () => h(Button, { danger: true, size: 'small' }, () => '删除')
         }
       )
   }
@@ -461,7 +442,7 @@ const skuColumns = [
 
 const handleAddSku = () => {
   skuRows.value.push({
-    tempKey: Date.now(),
+    tempKey: Date.now() + Math.random(),
     skuCode: '',
     specKey: '',
     specValue: '',
@@ -473,38 +454,40 @@ const handleAddSku = () => {
   })
 }
 
-const handleDeleteSku = (record) => {
+const handleDeleteSku = record => {
   skuRows.value = skuRows.value.filter(r => r.tempKey !== record.tempKey)
 }
 
 onMounted(async () => {
-  const [categoryRsp, farmerRsp] = await Promise.all([
-    fetchProductCategoryOptions(),
-    fetchFarmerOptions()
-  ])
+  const [categoryRsp, farmerRsp] = await Promise.all([fetchProductCategoryOptions(), fetchFarmerOptions()])
   categoryOptions.value = categoryRsp?.data || []
   farmerOptions.value = farmerRsp?.data || []
 
-  // 加载全局参数字典
   await loadAllParams()
 })
 
 const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
-  } catch (e) {
+  } catch {
     return
   }
 
-  // 验证 SKU
   if (skuRows.value.length === 0) {
     message.error('请至少添加一个SKU规格')
     return
   }
 
-  // 验证每个 SKU 的必填字段
   for (let i = 0; i < skuRows.value.length; i++) {
     const sku = skuRows.value[i]
+    if (!sku.specKey || !String(sku.specKey).trim()) {
+      message.error(`第 ${i + 1} 个SKU的规格名称不能为空`)
+      return
+    }
+    if (!sku.specValue || !String(sku.specValue).trim()) {
+      message.error(`第 ${i + 1} 个SKU的规格值不能为空`)
+      return
+    }
     if (!sku.skuCode || !sku.skuCode.trim()) {
       message.error(`第 ${i + 1} 个SKU的编码不能为空`)
       return
@@ -529,6 +512,7 @@ const handleSubmit = async () => {
     albumPicList: form.albumPicList || [],
     albumPics: form.albumPics || null,
     detailHtml: form.detailHtml || null,
+    description: form.detailHtml?.trim() || null,
     price: form.price,
     marketPrice: form.originalPrice ?? null,
     stock: form.stock,
@@ -541,21 +525,43 @@ const handleSubmit = async () => {
       promotionPrice: sku.promotionPrice || null,
       lowStock: sku.lowStock || 0,
       pic: sku.pic || '',
-      specs: [
-        { specKey: sku.specKey || '', specValue: sku.specValue || '' }
-      ]
+      specKey: String(sku.specKey || '').trim(),
+      specValue: String(sku.specValue || '').trim(),
+      specs: [{ specKey: String(sku.specKey || '').trim(), specValue: String(sku.specValue || '').trim() }]
     }))
   }
 
-  await createProduct(productData)
+  const createRsp = await createProduct(productData)
+  const rawProductId = createRsp?.data?.id ?? createRsp?.data?.productId ?? createRsp?.data
+  const createdProductId = Number(rawProductId)
+  if (!Number.isFinite(createdProductId) || createdProductId <= 0) {
+    message.error('商品已创建，但未拿到商品ID，SKU未保存。请联系后端检查创建接口返回值。')
+    return
+  }
+
+  const skuPayload = skuRows.value.map(sku => ({
+    productId: createdProductId,
+    skuCode: sku.skuCode.trim(),
+    price: sku.price,
+    stock: sku.stock,
+    promotionPrice: sku.promotionPrice || null,
+    lowStock: sku.lowStock || 0,
+    pic: sku.pic || '',
+    specs: [{ specKey: String(sku.specKey || '').trim(), specValue: String(sku.specValue || '').trim() }]
+  }))
+
+  const skuRsp = await saveSkuList(createdProductId, skuPayload)
+  if (!skuRsp?.success) {
+    message.error('SKU保存失败')
+    return
+  }
 
   if (publishChecked.value) {
-    message.info('商品已创建。请在商品列表点击"上架"开关完成上架。')
+    message.info('商品已创建，请在商品列表点击“上架”开关完成上架。')
   } else {
     message.success('创建成功')
   }
 
-  // 清空表单
   Object.assign(form, {
     name: '',
     productCategoryId: undefined,
@@ -573,14 +579,11 @@ const handleSubmit = async () => {
     detailHtml: ''
   })
 
-  // 清空其他状态
   publishChecked.value = false
   picFileList.value = []
   albumFileList.value = []
   skuRows.value = []
   selectedParamIds.value.clear()
-
-  // 重新加载参数列表以重置选中状态
   await loadAllParams()
 
   goBack()
@@ -639,7 +642,8 @@ const handleSubmit = async () => {
   width: 100%;
 }
 
-:deep(textarea.ant-input) {
-  border-radius: 6px !important;
+:deep(.ant-table) {
+  border-radius: 8px;
+  overflow: hidden;
 }
 </style>

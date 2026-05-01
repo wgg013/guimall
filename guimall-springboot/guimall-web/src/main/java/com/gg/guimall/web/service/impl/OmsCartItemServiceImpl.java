@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -120,6 +121,38 @@ public class OmsCartItemServiceImpl implements OmsCartItemService {
     @Override
     public Response list(Long memberId) {
         List<OmsCartItemDO> list = cartItemMapper.selectByMemberId(memberId);
+        // Fill missing productPic for legacy cart rows.
+        for (OmsCartItemDO item : list) {
+            if (item == null || StringUtils.hasText(item.getProductPic())) {
+                continue;
+            }
+            String fallbackPic = null;
+            if (item.getProductSkuId() != null) {
+                PmsSkuStockDO skuDO = skuStockMapper.selectById(item.getProductSkuId());
+                if (skuDO != null && StringUtils.hasText(skuDO.getPic())) {
+                    fallbackPic = skuDO.getPic();
+                }
+            }
+            if (!StringUtils.hasText(fallbackPic) && item.getProductId() != null) {
+                PmsProductDO productDO = productMapper.selectById(item.getProductId());
+                if (productDO != null) {
+                    if (StringUtils.hasText(productDO.getPic())) {
+                        fallbackPic = productDO.getPic();
+                    } else if (StringUtils.hasText(productDO.getAlbumPics())) {
+                        String[] pics = productDO.getAlbumPics().split(",");
+                        for (String pic : pics) {
+                            if (StringUtils.hasText(pic)) {
+                                fallbackPic = pic.trim();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (StringUtils.hasText(fallbackPic)) {
+                item.setProductPic(fallbackPic);
+            }
+        }
         return Response.success(list);
     }
 

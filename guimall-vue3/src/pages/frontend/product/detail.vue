@@ -65,20 +65,20 @@
               <div class="flex items-baseline space-x-3 mb-2">
                 <span class="text-stone-500 font-bold">价格</span>
                 <!-- 划线价格：选中 SKU 时显示 SKU 原价，否则显示商品市场价 -->
-                <span class="text-stone-400 text-lg line-through" v-if="selectedSku ? selectedSku.price : product.marketPrice">
-                  ¥{{ selectedSku ? selectedSku.price : product.marketPrice }}
+                <span class="text-stone-400 text-lg line-through" v-if="displayStrikePrice > 0">
+                  ¥{{ displayStrikePrice.toFixed(2) }}
                 </span>
                 <!-- 当前展示价：SKU 选中时优先用 SKU 促销价，否则用商品促销价，最后用 SKU/商品售价 -->
                 <span class="text-4xl font-black text-emerald-600">
-                  ¥{{ selectedSku ? (selectedSku.promotionPrice || product.promotionPrice || selectedSku.price) : (product.promotionPrice || product.price) }}
+                  ¥{{ displayCurrentPrice.toFixed(2) }}
                 </span>
                 <span class="text-stone-400 text-sm">/ {{ product.unit || '件' }}</span>
               </div>
               <!-- 促销标签 -->
               <div class="flex gap-2 flex-wrap">
                 <span v-if="product.promotionPrice" class="bg-red-100 text-red-600 text-xs font-bold px-3 py-1 rounded-full">限时促销</span>
-                <span v-if="product.marketPrice && product.price" class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">
-                  省 ¥{{ (product.marketPrice - (product.promotionPrice || product.price)).toFixed(2) }}
+                <span v-if="displaySaveAmount > 0" class="bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full">
+                  省 ¥{{ displaySaveAmount.toFixed(2) }}
                 </span>
                 <span class="bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full">产地直供</span>
               </div>
@@ -212,6 +212,30 @@ const hasDetailHtml = computed(() => {
     .replace(/&nbsp;/gi, '')
     .trim()
   return plainText.length > 0
+})
+
+const toNumber = (val) => {
+  const num = Number(val)
+  return Number.isFinite(num) ? num : 0
+}
+
+const displayStrikePrice = computed(() => {
+  if (selectedSku.value) {
+    return toNumber(selectedSku.value.price)
+  }
+  return toNumber(product.value.marketPrice)
+})
+
+const displayCurrentPrice = computed(() => {
+  if (selectedSku.value) {
+    return toNumber(selectedSku.value.promotionPrice || product.value.promotionPrice || selectedSku.value.price)
+  }
+  return toNumber(product.value.promotionPrice || product.value.price)
+})
+
+const displaySaveAmount = computed(() => {
+  const diff = displayStrikePrice.value - displayCurrentPrice.value
+  return diff > 0 ? diff : 0
 })
 
 // 商品参数（直接从 API 返回的数组读取）

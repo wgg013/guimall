@@ -9,12 +9,14 @@ import com.gg.guimall.common.domain.dos.PmsProductCategoryDO;
 import com.gg.guimall.common.domain.dos.PmsProductParamDO;
 import com.gg.guimall.common.domain.dos.PmsParamDefinitionDO;
 import com.gg.guimall.common.domain.dos.PmsFarmerDO;
+import com.gg.guimall.common.domain.dos.PmsSkuSpecDO;
 import com.gg.guimall.common.domain.dos.PmsSkuStockDO;
 import com.gg.guimall.common.domain.mapper.PmsFarmerMapper;
 import com.gg.guimall.common.domain.mapper.PmsProductCategoryMapper;
 import com.gg.guimall.common.domain.mapper.PmsProductMapper;
 import com.gg.guimall.common.domain.mapper.PmsProductParamMapper;
 import com.gg.guimall.common.domain.mapper.PmsParamDefinitionMapper;
+import com.gg.guimall.common.domain.mapper.PmsSkuSpecMapper;
 import com.gg.guimall.common.domain.mapper.PmsSkuStockMapper;
 import com.gg.guimall.common.enums.ResponseCodeEnum;
 import com.gg.guimall.common.exception.BizException;
@@ -28,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +38,9 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 商品管理 Service 实现类
+ * 闁哥喎妫楅幖褏绮婚敍鍕€?Service 閻庡湱鍋熼獮鍥╃尵?
  *
- * 负责商品的增删改查
+ * 閻犳劗鍠曢惌妤呭疮閸℃鎯傞柣銊ュ椤ゅ啴宕氶悩铏毉闁?
  *
  * @author wly
  */
@@ -58,15 +61,17 @@ public class PmsProductServiceImpl implements PmsProductService {
     @Autowired
     private PmsSkuStockMapper pmsSkuStockMapper;
     @Autowired
+    private PmsSkuSpecMapper pmsSkuSpecMapper;
+    @Autowired
     private TraceQrcodeService traceQrcodeService;
 
     /**
-     * 创建商品
+     * 闁告帗绋戠紓鎾诲疮閸℃鎯?
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Response createProduct(PmsProductCreateReqVO reqVO) {
-        // 校验商品分类是否存在
+        // 闁哄稄绻濋悰娆撳疮閸℃鎯傞柛鎺戞鐞氼偊寮伴姘剨閻庢稒锚濠€?
         if (Objects.nonNull(reqVO.getProductCategoryId())) {
             PmsProductCategoryDO categoryDO = pmsProductCategoryMapper.selectById(reqVO.getProductCategoryId());
             if (Objects.isNull(categoryDO)) {
@@ -74,7 +79,7 @@ public class PmsProductServiceImpl implements PmsProductService {
             }
         }
 
-        // 校验农户是否存在
+        // 闁哄稄绻濋悰娆撳礃濠婂嫬鐓曢柡鍕靛灠閹胶鈧稒锚濠€?
         if (Objects.nonNull(reqVO.getFarmerId())) {
             PmsFarmerDO farmerDO = pmsFarmerMapper.selectById(reqVO.getFarmerId());
             if (Objects.isNull(farmerDO)) {
@@ -82,7 +87,7 @@ public class PmsProductServiceImpl implements PmsProductService {
             }
         }
 
-        // 构建商品 DO
+        // 闁哄瀚紓鎾诲疮閸℃鎯?DO
         PmsProductDO productDO = PmsProductDO.builder()
                 .productCategoryId(reqVO.getProductCategoryId())
                 .farmerId(reqVO.getFarmerId())
@@ -100,36 +105,36 @@ public class PmsProductServiceImpl implements PmsProductService {
                 .keywords(reqVO.getKeywords())
                 .note(reqVO.getNote())
                 .detailHtml(reqVO.getDetailHtml())
-                .publishStatus(0) // 默认下架状态
+                .publishStatus(0) // 濮掓稒顭堥缁樼▔鐎ｎ偆浠搁柣妯垮煐閳?
                 .isNew(reqVO.getIsNew() != null ? reqVO.getIsNew() : 0)
                 .isRecommend(reqVO.getIsRecommend() != null ? reqVO.getIsRecommend() : 0)
-                .isDeleted(0) // 默认未删除
+                .isDeleted(0) // 濮掓稒顭堥濠氬嫉椤忓嫬鐏╅梻?
                 .sort(reqVO.getSort() != null ? reqVO.getSort() : 0)
                 .build();
 
-        // 插入数据库
+        // 闁圭粯甯掗崣鍡涘极閻楀牆绁﹂幖?
         pmsProductMapper.insert(productDO);
 
-        // 保存商品参数
+        // 濞ｅ洦绻傞悺銊╁疮閸℃鎯傞柛娆忓€归弳?
         saveProductParams(productDO.getId(), reqVO.getProductParams());
 
-        // 保存SKU库存
+        // 濞ｅ洦绻傞悺鈯縆U閹煎瓨鎸搁悺?
         saveSkuStockList(productDO.getId(), reqVO.getSkuStockList());
 
-        // 自动生成溯源二维码
+        // 闁煎浜滄慨鈺呮偨閻旂鐏囨繝褜鍨辩花顔界瀹€鈧ǎ顕€鎯?
         try {
             traceQrcodeService.generate(productDO.getId());
-            log.info("商品创建成功，已自动生成溯源二维码，productId: {}", productDO.getId());
+            log.info("闁哥喎妫楅幖褔宕氬☉妯肩处闁瑰瓨鍔曟慨娑㈡晬鐏炶棄鍤掗柤濂変簻婵晠鎮介悢绋跨亣婵犙屽灡缁喗绂嶅畝鈧ǎ顕€鎯嶆笟濠勭productId: {}", productDO.getId());
         } catch (Exception e) {
-            log.error("自动生成溯源二维码失败，productId: {}", productDO.getId(), e);
-            // 不影响商品创建，只记录日志
+            log.error("闁煎浜滄慨鈺呮偨閻旂鐏囨繝褜鍨辩花顔界瀹€鈧ǎ顕€鎯嶆担鎼炰杭閻犳劑鍎荤槐婕皉oductId: {}", productDO.getId(), e);
+            // 濞戞挸绉存總鏍传瀹ュ懏娅岄柛婵呯閸ㄥ崬顕欓悮瀵哥闁告瑯浜ｉ鍥亹閺囩喐锛夐煫?
         }
 
-        return Response.success();
+        return Response.success(productDO.getId());
     }
 
     /**
-     * 商品分页查询（列表项含关联展示：分类名、农户名、属性分类名）
+     * 闁哥喎妫楅幖褔宕氶崱娑栤偓澶愬蓟閵夘煈鍤勯柨娑樼墕閸亞鎮伴妸鈹库偓宥夊触椤愩垹褰犻柤杈ㄦ煥閻秶绮堥悮瀵哥獥闁告帒妫涚悮顐﹀触瀹ュ啠鍋撴担绋挎櫩闁规潙鍢查幃鏇㈠Υ娴ｅ摜娼ｉ柟顑啫鐎荤紒顐ヮ嚙閹洟鏁?
      */
     @Override
     public PageResponse findProductPageList(FindPmsProductPageListReqVO reqVO) {
@@ -146,14 +151,14 @@ public class PmsProductServiceImpl implements PmsProductService {
             return PageResponse.success(page, Collections.emptyList());
         }
 
-        // 批量查询分类名
+        // 闁归潧缍婇崳娲蓟閵夘煈鍤勯柛鎺戞鐞氼偊宕?
         List<Long> catIds = page.getRecords().stream()
                 .map(PmsProductDO::getProductCategoryId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         Map<Long, String> catNameMap = catIds.isEmpty() ? Collections.emptyMap() :
                 pmsProductCategoryMapper.selectBatchIds(catIds).stream()
                         .collect(Collectors.toMap(PmsProductCategoryDO::getId, PmsProductCategoryDO::getName));
 
-        // 批量查询农户名
+        // 闁归潧缍婇崳娲蓟閵夘煈鍤勯柛鎰矋閸╂盯宕?
         List<Long> farmerIds = page.getRecords().stream()
                 .map(PmsProductDO::getFarmerId).filter(Objects::nonNull).distinct().collect(Collectors.toList());
         Map<Long, String> farmerNameMap = farmerIds.isEmpty() ? Collections.emptyMap() :
@@ -183,7 +188,7 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 查询商品详情（含关联展示：分类名称、农户名称）
+     * 闁哄被鍎撮妤呭疮閸℃鎯傞悹鍥烽檮閸庡繘鏁嶉崼婵囧創闁稿繐鐤囨禒鍫沪閺囩姰浠涢柨娑欒壘閸ㄥ海鐚剧拠鍙夊€崇紒澶庡焽閳ь兛绀侀崯姗€骞嬪畡鐗堝€崇紒澶婂簻缁?
      */
     @Override
     public Response findProductDetail(Long id) {
@@ -202,7 +207,7 @@ public class PmsProductServiceImpl implements PmsProductService {
         BeanUtils.copyProperties(productDO, rspVO);
         rspVO.setAlbumPicList(parseAlbumPicList(productDO.getAlbumPics()));
 
-        // 关联查询并填充分类名称
+        // 闁稿繐鐤囨禒鍫ュ蓟閵夘煈鍤勬鐐舵硾閿濈偤宕楅崨顓炵€荤紒顐ヮ嚙閹洜绮?
         if (Objects.nonNull(productDO.getProductCategoryId())) {
             PmsProductCategoryDO category = pmsProductCategoryMapper.selectById(productDO.getProductCategoryId());
             if (category != null) {
@@ -210,7 +215,7 @@ public class PmsProductServiceImpl implements PmsProductService {
             }
         }
 
-        // 关联查询并填充农户名称
+        // 闁稿繐鐤囨禒鍫ュ蓟閵夘煈鍤勬鐐舵硾閿濈偤宕楅崨顓炴櫩闁规潙鍢查幃鏇犵矓?
         if (Objects.nonNull(productDO.getFarmerId())) {
             PmsFarmerDO farmer = pmsFarmerMapper.selectById(productDO.getFarmerId());
             if (farmer != null) {
@@ -218,10 +223,10 @@ public class PmsProductServiceImpl implements PmsProductService {
             }
         }
 
-        // 查询商品参数（关联参数定义表拿参数名和参数值）
+        // 闁哄被鍎撮妤呭疮閸℃鎯傞柛娆忓€归弳鐔兼晬閸繂褰犻柤杈ㄦ煥瀵剟寮弶璺ㄦ毎濞戞柨顦抽妴鍐箯閸喖妫橀柡浣规緲閹洟宕仦钘夋闁轰焦婢橀埀顒傘€嬬槐?
         List<PmsProductParamDO> paramDOs = pmsProductParamMapper.selectByProductId(id);
         if (!CollectionUtils.isEmpty(paramDOs)) {
-            // 批量查询参数定义（包含参数名和参数值）
+            // 闁归潧缍婇崳娲蓟閵夘煈鍤勯柛娆忓€归弳鐔衡偓瑙勭煯缁犵喖鏁嶉崼婵嗙樁闁告凹鍋勫顒勫极閺夋寧鍊抽柛婊冭嫰瀵剟寮弶搴撳亾绾绀?
             List<Long> paramIds = paramDOs.stream()
                     .map(PmsProductParamDO::getParamId).distinct().collect(Collectors.toList());
             Map<Long, PmsParamDefinitionDO> paramDefMap = paramIds.isEmpty() ? Collections.emptyMap() :
@@ -245,23 +250,23 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 修改商品
+     * 濞ｅ浂鍠楅弫濂稿疮閸℃鎯?
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Response updateProduct(PmsProductUpdateReqVO reqVO) {
-        // 参数校验
+        // 闁告瑥鍊归弳鐔煎冀閿熺姷宕?
         if (Objects.isNull(reqVO.getId()) || reqVO.getId() <= 0) {
             throw new BizException(ResponseCodeEnum.INVALID_PRODUCT_DATA);
         }
 
-        // 校验商品是否存在
+        // 闁哄稄绻濋悰娆撳疮閸℃鎯傞柡鍕靛灠閹胶鈧稒锚濠€?
         PmsProductDO existProduct = pmsProductMapper.selectById(reqVO.getId());
         if (Objects.isNull(existProduct)) {
             throw new BizException(ResponseCodeEnum.PRODUCT_NOT_FOUND);
         }
 
-        // 校验商品分类是否存在
+        // 闁哄稄绻濋悰娆撳疮閸℃鎯傞柛鎺戞鐞氼偊寮伴姘剨閻庢稒锚濠€?
         if (Objects.nonNull(reqVO.getProductCategoryId())) {
             PmsProductCategoryDO categoryDO = pmsProductCategoryMapper.selectById(reqVO.getProductCategoryId());
             if (Objects.isNull(categoryDO)) {
@@ -269,7 +274,7 @@ public class PmsProductServiceImpl implements PmsProductService {
             }
         }
 
-        // 校验农户是否存在
+        // 闁哄稄绻濋悰娆撳礃濠婂嫬鐓曢柡鍕靛灠閹胶鈧稒锚濠€?
         if (Objects.nonNull(reqVO.getFarmerId())) {
             PmsFarmerDO farmerDO = pmsFarmerMapper.selectById(reqVO.getFarmerId());
             if (Objects.isNull(farmerDO)) {
@@ -304,7 +309,7 @@ public class PmsProductServiceImpl implements PmsProductService {
 
         pmsProductMapper.updateById(productDO);
 
-        // 更新商品参数（先删后插）
+        // 闁哄洤鐡ㄩ弻濠囧疮閸℃鎯傞柛娆忓€归弳鐔兼晬閸繂甯ラ柛鎺斿Т閹骞撻幒鐐电
         saveProductParams(reqVO.getId(), reqVO.getProductParams());
 
         return Response.success();
@@ -313,25 +318,25 @@ public class PmsProductServiceImpl implements PmsProductService {
     @Override
     public Response deleteProduct(Long id) {
 
-        // 参数校验
+        // 闁告瑥鍊归弳鐔煎冀閿熺姷宕?
         if (Objects.isNull(id) || id <= 0) {
             throw new BizException(ResponseCodeEnum.INVALID_PRODUCT_DATA);
         }
 
-        // 校验商品是否存在
+        // 闁哄稄绻濋悰娆撳疮閸℃鎯傞柡鍕靛灠閹胶鈧稒锚濠€?
         PmsProductDO productDO = pmsProductMapper.selectById(id);
         if (Objects.isNull(productDO)) {
             throw new BizException(ResponseCodeEnum.PRODUCT_NOT_FOUND);
         }
 
-        // 执行删除
+        // 闁圭瑳鍡╂斀闁告帞濞€濞?
         pmsProductMapper.deleteById(id);
 
         return Response.success();
     }
 
     /**
-     * 上架商品
+     * 濞戞挸锕ラ悘锕傚疮閸℃鎯?
      */
     @Override
     public Response publishProduct(Long id) {
@@ -339,7 +344,7 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 下架商品
+     * 濞戞挸顑嗛悘锕傚疮閸℃鎯?
      */
     @Override
     public Response unpublishProduct(Long id) {
@@ -347,21 +352,21 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 更新上架状态
+     * 闁哄洤鐡ㄩ弻濠冪▔婵犲啰浠搁柣妯垮煐閳?
      */
     private Response updatePublishStatus(Long id, Integer publishStatus) {
-        // 参数校验
+        // 闁告瑥鍊归弳鐔煎冀閿熺姷宕?
         if (Objects.isNull(id) || id <= 0) {
             throw new BizException(ResponseCodeEnum.INVALID_PRODUCT_DATA);
         }
 
-        // 校验商品是否存在
+        // 闁哄稄绻濋悰娆撳疮閸℃鎯傞柡鍕靛灠閹胶鈧稒锚濠€?
         PmsProductDO productDO = pmsProductMapper.selectById(id);
         if (Objects.isNull(productDO)) {
             throw new BizException(ResponseCodeEnum.PRODUCT_NOT_FOUND);
         }
 
-        // 更新上架状态
+        // 闁哄洤鐡ㄩ弻濠冪▔婵犲啰浠搁柣妯垮煐閳?
         PmsProductDO updateDO = PmsProductDO.builder()
                 .id(id)
                 .publishStatus(publishStatus)
@@ -372,7 +377,7 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 批量删除商品
+     * 闁归潧缍婇崳娲礆閻樼粯鐝熼柛鐔锋閹?
      */
     @Override
     public Response batchDelete(List<Long> ids) {
@@ -384,7 +389,7 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 批量更新上架状态
+     * 闁归潧缍婇崳娲即鐎涙ɑ鐓€濞戞挸锕ラ悘锕傛偐閼哥鍋?
      */
     @Override
     public Response batchUpdatePublishStatus(List<Long> ids, Integer publishStatus) {
@@ -401,26 +406,26 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
-     * 保存商品参数（先删后插）
+     * 濞ｅ洦绻傞悺銊╁疮閸℃鎯傞柛娆忓€归弳鐔兼晬閸繂甯ラ柛鎺斿Т閹骞撻幒鐐电
      */
     private void saveProductParams(Long productId, List<ProductParamItemVO> productParams) {
-        // 先删除旧参数
+        // 闁稿繐鐗嗛崹褰掓⒔閵堝棙锛嬮柛娆忓€归弳?
         pmsProductParamMapper.deleteByProductId(productId);
 
         if (CollectionUtils.isEmpty(productParams)) {
-            System.out.println("商品参数为空，跳过保存");
+            System.out.println("No product params to save, skip.");
             return;
         }
 
-        System.out.println("开始保存商品参数，商品ID: " + productId + ", 参数数量: " + productParams.size());
+        System.out.println("Saving product params, productId: " + productId + ", count: " + productParams.size());
 
-        // 批量插入新参数
+        // 闁归潧缍婇崳娲箵閹烘垵寮抽柡鍌涙緲瀵剟寮?
         for (int i = 0; i < productParams.size(); i++) {
             ProductParamItemVO item = productParams.get(i);
-            System.out.println("参数 " + i + ": paramId=" + item.getParamId() + ", key=" + item.getKey() + ", value=" + item.getValue());
+            System.out.println("Param item " + i + ": paramId=" + item.getParamId() + ", key=" + item.getKey() + ", value=" + item.getValue());
 
             if (item.getParamId() == null) {
-                System.out.println("参数ID为空，跳过");
+                System.out.println("Param item paramId is null, skip.");
                 continue;
             }
 
@@ -430,30 +435,31 @@ public class PmsProductServiceImpl implements PmsProductService {
                     .sort(i)
                     .build();
             pmsProductParamMapper.insert(paramDO);
-            System.out.println("参数保存成功: " + paramDO);
+            System.out.println("Param persisted: " + paramDO);
         }
     }
-
     /**
-     * 保存SKU库存列表
+     * 濞ｅ洦绻傞悺鈯縆U閹煎瓨鎸搁悺銊╁礆濡ゅ嫨鈧?
      */
     private void saveSkuStockList(Long productId, List<PmsProductCreateReqVO.SkuStockItemVO> skuStockList) {
         if (CollectionUtils.isEmpty(skuStockList)) {
-            log.warn("SKU库存列表为空，跳过保存");
+            log.warn("SKU stock list is empty, skip save. productId={}", productId);
             return;
         }
 
-        log.info("开始保存SKU库存，商品ID: {}, SKU数量: {}", productId, skuStockList.size());
+        log.info("Saving SKU stock list, productId: {}, count: {}", productId, skuStockList.size());
 
         for (PmsProductCreateReqVO.SkuStockItemVO skuItem : skuStockList) {
-            // 序列化规格数据为JSON
+            List<PmsProductCreateReqVO.SkuSpecItemVO> specItems = resolveSkuSpecs(skuItem);
+
+            // 閹兼潙绻愰崹顏堝礌閺嶎剦娼愰柡宥呭悑閺嗙喖骞戦鏄忕JSON
             String spDataJson = null;
-            if (!CollectionUtils.isEmpty(skuItem.getSpecs())) {
+            if (!CollectionUtils.isEmpty(specItems)) {
                 try {
-                    // 构建JSON格式: [{"key":"规格名","value":"规格值"}]
+                    // 闁哄瀚紓鎻揝ON闁哄秶鍘х槐? [{"key":"閻熸瑥瀚悧鎼佸触?,"value":"閻熸瑥瀚悧鎼佸磹?}]
                     StringBuilder jsonBuilder = new StringBuilder("[");
-                    for (int i = 0; i < skuItem.getSpecs().size(); i++) {
-                        PmsProductCreateReqVO.SkuSpecItemVO spec = skuItem.getSpecs().get(i);
+                    for (int i = 0; i < specItems.size(); i++) {
+                        PmsProductCreateReqVO.SkuSpecItemVO spec = specItems.get(i);
                         if (i > 0) jsonBuilder.append(",");
                         jsonBuilder.append("{\"key\":\"").append(spec.getSpecKey())
                                 .append("\",\"value\":\"").append(spec.getSpecValue()).append("\"}");
@@ -461,7 +467,7 @@ public class PmsProductServiceImpl implements PmsProductService {
                     jsonBuilder.append("]");
                     spDataJson = jsonBuilder.toString();
                 } catch (Exception e) {
-                    log.error("序列化SKU规格数据失败", e);
+                    log.error("Failed to build SKU spec JSON, skuCode={}", skuItem.getSkuCode(), e);
                 }
             }
 
@@ -479,10 +485,74 @@ public class PmsProductServiceImpl implements PmsProductService {
                     .build();
 
             pmsSkuStockMapper.insert(skuStockDO);
-            log.info("SKU保存成功: skuCode={}, price={}, stock={}", skuItem.getSkuCode(), skuItem.getPrice(), skuItem.getStock());
+            log.info("SKU persisted: skuCode={}, price={}, stock={}", skuItem.getSkuCode(), skuItem.getPrice(), skuItem.getStock());
+
+            // 鍚屾鍐欏叆 SKU 瑙勬牸琛紝淇濊瘉鏂板鍚庡湪鍓嶅悗鍙伴兘鑳芥纭鍙栬鏍?
+            if (!CollectionUtils.isEmpty(specItems)) {
+                int sort = 0;
+                for (PmsProductCreateReqVO.SkuSpecItemVO spec : specItems) {
+                    if (spec == null) {
+                        continue;
+                    }
+                    String specValue = spec.getSpecValue();
+                    if (specValue == null || specValue.trim().isEmpty()) {
+                        continue;
+                    }
+                    pmsSkuSpecMapper.insert(PmsSkuSpecDO.builder()
+                            .skuId(skuStockDO.getId())
+                            .productId(productId)
+                            .specKey(spec.getSpecKey())
+                            .specValue(specValue.trim())
+                            .sort(sort++)
+                            .build());
+                }
+            }
         }
     }
 
+    private List<PmsProductCreateReqVO.SkuSpecItemVO> resolveSkuSpecs(PmsProductCreateReqVO.SkuStockItemVO skuItem) {
+        List<PmsProductCreateReqVO.SkuSpecItemVO> normalized = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(skuItem.getSpecs())) {
+            for (PmsProductCreateReqVO.SkuSpecItemVO spec : skuItem.getSpecs()) {
+                if (spec == null) {
+                    continue;
+                }
+                String specKey = trimToNull(spec.getSpecKey());
+                String specValue = trimToNull(spec.getSpecValue());
+                if (specKey == null && specValue == null) {
+                    continue;
+                }
+                normalized.add(PmsProductCreateReqVO.SkuSpecItemVO.builder()
+                        .specKey(specKey)
+                        .specValue(specValue)
+                        .build());
+            }
+        }
+
+        String fallbackSpecKey = trimToNull(skuItem.getSpecKey());
+        String fallbackSpecValue = trimToNull(skuItem.getSpecValue());
+        if (fallbackSpecKey != null || fallbackSpecValue != null) {
+            boolean existed = normalized.stream().anyMatch(item ->
+                    Objects.equals(item.getSpecKey(), fallbackSpecKey)
+                            && Objects.equals(item.getSpecValue(), fallbackSpecValue));
+            if (!existed) {
+                normalized.add(PmsProductCreateReqVO.SkuSpecItemVO.builder()
+                        .specKey(fallbackSpecKey)
+                        .specValue(fallbackSpecValue)
+                        .build());
+            }
+        }
+
+        return normalized;
+    }
+
+    private String trimToNull(String input) {
+        if (input == null) {
+            return null;
+        }
+        String trimmed = input.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
     private String normalizeAlbumPics(String albumPics, List<String> albumPicList) {
         if (!CollectionUtils.isEmpty(albumPicList)) {
             List<String> cleanedList = albumPicList.stream()

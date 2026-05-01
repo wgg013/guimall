@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-2 box">
     <a-card :bordered="false" class="mb-5">
       <div class="flex flex-wrap items-center gap-4">
@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted, watch, h } from 'vue'
+import { reactive, ref, onMounted, onActivated, onDeactivated, watch, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { message, Input, InputNumber, Button, Popconfirm } from 'ant-design-vue'
 import { ArrowLeftOutlined, PlusOutlined } from '@ant-design/icons-vue'
@@ -180,6 +180,8 @@ import {
 
 const router = useRouter()
 const route = useRoute()
+const pageActive = ref(false)
+const isCurrentProductUpdateRoute = () => route.path === '/admin/pms/product/update'
 
 const formRef = ref()
 
@@ -306,10 +308,25 @@ const goBack = () => {
 }
 
 onMounted(() => {
-  init()
+  if (isCurrentProductUpdateRoute()) {
+    pageActive.value = true
+    init()
+  }
+})
+
+onActivated(() => {
+  pageActive.value = true
+  if (isCurrentProductUpdateRoute()) {
+    init()
+  }
+})
+
+onDeactivated(() => {
+  pageActive.value = false
 })
 
 watch(() => route.query.id, (newId, oldId) => {
+  if (!pageActive.value || !isCurrentProductUpdateRoute()) return
   if (newId && newId !== oldId) {
     Object.assign(form, {
       id: null,
@@ -338,6 +355,8 @@ watch(() => route.query.id, (newId, oldId) => {
 })
 
 const init = async () => {
+  if (!isCurrentProductUpdateRoute()) return
+
   const id = Number(route.query.id)
   if (!id) return
 

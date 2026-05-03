@@ -108,6 +108,7 @@ public class PmsProductServiceImpl implements PmsProductService {
                 .publishStatus(0) // 濮掓稒顭堥缁樼▔鐎ｎ偆浠搁柣妯垮煐閳?
                 .isNew(reqVO.getIsNew() != null ? reqVO.getIsNew() : 0)
                 .isRecommend(reqVO.getIsRecommend() != null ? reqVO.getIsRecommend() : 0)
+                .isAidAgriculture(reqVO.getIsAidAgriculture() != null ? reqVO.getIsAidAgriculture() : 0)
                 .isDeleted(0) // 濮掓稒顭堥濠氬嫉椤忓嫬鐏╅梻?
                 .sort(reqVO.getSort() != null ? reqVO.getSort() : 0)
                 .build();
@@ -179,6 +180,7 @@ public class PmsProductServiceImpl implements PmsProductService {
                         .price(product.getPrice())
                         .stock(product.getStock())
                         .publishStatus(product.getPublishStatus())
+                        .isAidAgriculture(product.getIsAidAgriculture())
                         .sale(product.getSale())
                         .createTime(product.getCreateTime())
                         .build())
@@ -302,6 +304,7 @@ public class PmsProductServiceImpl implements PmsProductService {
                 .detailHtml(reqVO.getDetailHtml())
                 .isNew(reqVO.getIsNew())
                 .isRecommend(reqVO.getIsRecommend())
+                .isAidAgriculture(reqVO.getIsAidAgriculture() != null ? reqVO.getIsAidAgriculture() : existProduct.getIsAidAgriculture())
                 .publishStatus(reqVO.getPublishStatus())
                 .sort(reqVO.getSort())
                 .updateTime(LocalDateTime.now())
@@ -352,6 +355,22 @@ public class PmsProductServiceImpl implements PmsProductService {
     }
 
     /**
+     * 设为助农商品
+     */
+    @Override
+    public Response enableAidAgriculture(Long id) {
+        return updateAidAgricultureStatus(id, 1);
+    }
+
+    /**
+     * 取消助农商品
+     */
+    @Override
+    public Response disableAidAgriculture(Long id) {
+        return updateAidAgricultureStatus(id, 0);
+    }
+
+    /**
      * 闁哄洤鐡ㄩ弻濠冪▔婵犲啰浠搁柣妯垮煐閳?
      */
     private Response updatePublishStatus(Long id, Integer publishStatus) {
@@ -373,6 +392,28 @@ public class PmsProductServiceImpl implements PmsProductService {
                 .build();
         pmsProductMapper.updateById(updateDO);
 
+        return Response.success();
+    }
+
+    /**
+     * 更新助农状态
+     */
+    private Response updateAidAgricultureStatus(Long id, Integer isAidAgriculture) {
+        if (Objects.isNull(id) || id <= 0) {
+            throw new BizException(ResponseCodeEnum.INVALID_PRODUCT_DATA);
+        }
+
+        PmsProductDO productDO = pmsProductMapper.selectById(id);
+        if (Objects.isNull(productDO)) {
+            throw new BizException(ResponseCodeEnum.PRODUCT_NOT_FOUND);
+        }
+
+        PmsProductDO updateDO = PmsProductDO.builder()
+                .id(id)
+                .isAidAgriculture(isAidAgriculture)
+                .updateTime(LocalDateTime.now())
+                .build();
+        pmsProductMapper.updateById(updateDO);
         return Response.success();
     }
 

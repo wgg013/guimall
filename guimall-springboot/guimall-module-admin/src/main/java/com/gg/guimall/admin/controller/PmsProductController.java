@@ -75,6 +75,20 @@ public class PmsProductController {
         return pmsProductService.unpublishProduct(id);
     }
 
+    @PutMapping("/{id}/aid/enable")
+    @ApiOperation(value = "设为助农商品")
+    @ApiOperationLog(description = "设为助农商品")
+    public Response enableAidAgriculture(@PathVariable Long id) {
+        return pmsProductService.enableAidAgriculture(id);
+    }
+
+    @PutMapping("/{id}/aid/disable")
+    @ApiOperation(value = "取消助农商品")
+    @ApiOperationLog(description = "取消助农商品")
+    public Response disableAidAgriculture(@PathVariable Long id) {
+        return pmsProductService.disableAidAgriculture(id);
+    }
+
     @PostMapping("/batch/delete")
     @ApiOperation(value = "批量删除商品")
     @ApiOperationLog(description = "批量删除商品")

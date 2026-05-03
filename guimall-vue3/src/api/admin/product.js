@@ -35,6 +35,16 @@ export function unpublishProduct(id) {
   return axios.put(`/admin/pms/product/${id}/unpublish`);
 }
 
+/** 设为助农商品 */
+export function enableAidAgriculture(id) {
+  return axios.put(`/admin/pms/product/${id}/aid/enable`);
+}
+
+/** 取消助农商品 */
+export function disableAidAgriculture(id) {
+  return axios.put(`/admin/pms/product/${id}/aid/disable`);
+}
+
 /** 批量删除 */
 export function batchDeleteProducts(ids) {
   return axios.post("/admin/pms/product/batch/delete", ids);

@@ -51,6 +51,16 @@ public interface PmsProductService {
     Response unpublishProduct(Long id);
 
     /**
+     * 设为助农商品
+     */
+    Response enableAidAgriculture(Long id);
+
+    /**
+     * 取消助农商品
+     */
+    Response disableAidAgriculture(Long id);
+
+    /**
      * 批量删除商品
      */
     Response batchDelete(List<Long> ids);

@@ -60,6 +60,9 @@ public class FindPmsProductPageListRspVO {
     @ApiModelProperty(value = "上架状态：0下架，1上架")
     private Integer publishStatus;
 
+    @ApiModelProperty(value = "是否助农商品：0否，1是")
+    private Integer isAidAgriculture;
+
     @ApiModelProperty(value = "销量")
     private Integer sale;
 

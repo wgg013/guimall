@@ -99,6 +99,10 @@
           <a-switch v-model:checked="publishChecked" />
         </a-form-item>
 
+        <a-form-item label="助农商品">
+          <a-switch v-model:checked="aidAgricultureChecked" />
+        </a-form-item>
+
         <a-form-item label="商品描述">
           <RichEditor v-model="form.detailHtml" />
         </a-form-item>
@@ -174,6 +178,7 @@ const formRef = ref(null)
 const categoryOptions = ref([])
 const farmerOptions = ref([])
 const publishChecked = ref(false)
+const aidAgricultureChecked = ref(false)
 const picFileList = ref([])
 const albumFileList = ref([])
 
@@ -213,6 +218,7 @@ const form = reactive({
   stock: 0,
   unit: '斤',
   publishStatus: 0,
+  isAidAgriculture: 0,
   detailHtml: ''
 })
 
@@ -517,6 +523,7 @@ const handleSubmit = async () => {
     marketPrice: form.originalPrice ?? null,
     stock: form.stock,
     unit: form.unit?.trim() || null,
+    isAidAgriculture: aidAgricultureChecked.value ? 1 : 0,
     productParams: buildProductParams(),
     skuStockList: skuRows.value.map(sku => ({
       skuCode: sku.skuCode.trim(),
@@ -576,10 +583,12 @@ const handleSubmit = async () => {
     stock: 0,
     unit: '斤',
     publishStatus: 0,
+    isAidAgriculture: 0,
     detailHtml: ''
   })
 
   publishChecked.value = false
+  aidAgricultureChecked.value = false
   picFileList.value = []
   albumFileList.value = []
   skuRows.value = []

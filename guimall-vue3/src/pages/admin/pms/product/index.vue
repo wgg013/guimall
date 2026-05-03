@@ -80,7 +80,9 @@ import {
   fetchProductList,
   deleteProduct,
   publishProduct,
-  unpublishProduct
+  unpublishProduct,
+  enableAidAgriculture,
+  disableAidAgriculture
 } from '@/api/admin/product'
 import { fetchProductCategoryTree } from '@/api/admin/productCategory'
 import {
@@ -189,11 +191,11 @@ const columns = [
   {
     title: '状态',
     align: 'center',
-    width: 160,
+    width: 210,
     customRender: ({ record }) => {
-      return h('div', { class: 'flex flex-col items-center gap-3 py-1' }, [
-        h('div', { class: 'flex items-center justify-center gap-2' }, [
-          h('span', { class: 'text-sm text-gray-600 w-10 text-right shrink-0' }, '上架'),
+      return h('div', { class: 'grid grid-cols-2 gap-x-3 gap-y-2 py-1' }, [
+        h('div', { class: 'flex items-center justify-between gap-2' }, [
+          h('span', { class: 'text-xs text-gray-600 shrink-0' }, '上架'),
           h(Switch, {
             checked: Number(record.publishStatus) === 1,
             class: 'product-status-switch',
@@ -202,8 +204,8 @@ const columns = [
             }
           })
         ]),
-        h('div', { class: 'flex items-center justify-center gap-2' }, [
-          h('span', { class: 'text-sm text-gray-600 w-10 text-right shrink-0' }, '新品'),
+        h('div', { class: 'flex items-center justify-between gap-2' }, [
+          h('span', { class: 'text-xs text-gray-600 shrink-0' }, '新品'),
           h(Switch, {
             checked: !!record.newStatus,
             class: 'product-status-switch',
@@ -212,13 +214,23 @@ const columns = [
             }
           })
         ]),
-        h('div', { class: 'flex items-center justify-center gap-2' }, [
-          h('span', { class: 'text-sm text-gray-600 w-10 text-right shrink-0' }, '推荐'),
+        h('div', { class: 'flex items-center justify-between gap-2' }, [
+          h('span', { class: 'text-xs text-gray-600 shrink-0' }, '推荐'),
           h(Switch, {
             checked: !!record.recommendStatus,
             class: 'product-status-switch',
             onChange: async (checked) => {
               await handleToggleRecommend(record, checked)
+            }
+          })
+        ]),
+        h('div', { class: 'flex items-center justify-between gap-2' }, [
+          h('span', { class: 'text-xs text-gray-600 shrink-0' }, '助农'),
+          h(Switch, {
+            checked: Number(record.isAidAgriculture) === 1,
+            class: 'product-status-switch',
+            onChange: async (checked) => {
+              await handleToggleAidAgriculture(record, checked)
             }
           })
         ])
@@ -393,6 +405,7 @@ const fetchProducts = async () => {
     const merged = Array.from(uniq.values()).map((item) => ({
       ...item,
       stock: typeof item.stock === 'string' ? parseInt(item.stock, 10) : (item.stock || 0),
+      isAidAgriculture: Number(item.isAidAgriculture) === 1 ? 1 : 0,
       newStatus: !!homeNewIdMap.value[item.id],
       recommendStatus: !!homeRecommendIdMap.value[item.id]
     }))
@@ -414,6 +427,7 @@ const fetchProducts = async () => {
   allProducts.value = (rsp.data || []).map((item) => ({
     ...item,
     stock: typeof item.stock === 'string' ? parseInt(item.stock, 10) : (item.stock || 0),
+    isAidAgriculture: Number(item.isAidAgriculture) === 1 ? 1 : 0,
     newStatus: !!homeNewIdMap.value[item.id],
     recommendStatus: !!homeRecommendIdMap.value[item.id]
   }))
@@ -506,6 +520,17 @@ const handleToggleRecommend = async (record, checked) => {
   message.success('推荐状态已更新')
 }
 
+const handleToggleAidAgriculture = async (record, checked) => {
+  if (!record?.id) return
+  if (checked) {
+    await enableAidAgriculture(record.id)
+  } else {
+    await disableAidAgriculture(record.id)
+  }
+  record.isAidAgriculture = checked ? 1 : 0
+  message.success('助农状态已更新')
+}
+
 onMounted(async () => {
   await fetchCategories()
   await fetchStatusRelations()
@@ -526,7 +551,7 @@ watch([current, size], () => {
 
 <style scoped>
 :deep(.product-status-switch.ant-switch) {
-  transform: scale(1.12);
+  transform: scale(0.95);
   transform-origin: center center;
 }
 </style>

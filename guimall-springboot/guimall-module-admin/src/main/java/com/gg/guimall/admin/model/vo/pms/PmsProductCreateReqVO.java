@@ -88,6 +88,9 @@ public class PmsProductCreateReqVO {
     @ApiModelProperty(value = "是否推荐")
     private Integer isRecommend;
 
+    @ApiModelProperty(value = "是否助农商品：0否 1是")
+    private Integer isAidAgriculture;
+
     @ApiModelProperty(value = "商品详情HTML")
     private String detailHtml;
 

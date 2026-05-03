@@ -86,6 +86,9 @@ public class FindPmsProductDetailRspVO {
     @ApiModelProperty(value = "是否人气推荐：0否 1是")
     private Integer isRecommend;
 
+    @ApiModelProperty(value = "是否助农商品：0否 1是")
+    private Integer isAidAgriculture;
+
     @ApiModelProperty(value = "排序")
     private Integer sort;
 

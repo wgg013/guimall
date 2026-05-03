@@ -111,6 +111,10 @@
           <a-switch v-model:checked="publishChecked" />
         </a-form-item>
 
+        <a-form-item label="助农商品">
+          <a-switch v-model:checked="aidAgricultureChecked" />
+        </a-form-item>
+
         <a-form-item label="商品描述">
           <a-textarea v-model:value="form.description" :rows="4" class="gm-field" />
         </a-form-item>
@@ -190,6 +194,7 @@ const farmerOptions = ref([])
 const attrCategoryOptions = ref([])
 
 const publishChecked = ref(false)
+const aidAgricultureChecked = ref(false)
 const picFileList = ref([])
 const albumFileList = ref([])
 
@@ -213,6 +218,7 @@ const form = reactive({
   sale: 0,
   unit: '斤',
   publishStatus: 0,
+  isAidAgriculture: 0,
   description: ''
 })
 
@@ -345,6 +351,7 @@ watch(() => route.query.id, (newId, oldId) => {
       sale: 0,
       unit: '斤',
       publishStatus: 0,
+      isAidAgriculture: 0,
       description: ''
     })
     picFileList.value = []
@@ -387,6 +394,7 @@ const init = async () => {
   form.albumPics = albumPicList.join(',')
 
   publishChecked.value = form.publishStatus === 1
+  aidAgricultureChecked.value = Number(form.isAidAgriculture) === 1
   picFileList.value = form.pic
     ? [{ uid: '-1', name: '商品主图', status: 'done', url: form.pic }]
     : []
@@ -590,6 +598,7 @@ const handleSubmit = async () => {
     albumPicList,
     albumPics: albumPicList.join(',') || null,
     unit: normalizeUnit(form.unit),
+    isAidAgriculture: aidAgricultureChecked.value ? 1 : 0,
     publishStatus: publishChecked.value ? 1 : 0
   })
 

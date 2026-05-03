@@ -91,6 +91,9 @@ public class PmsProductUpdateReqVO {
     @ApiModelProperty(value = "是否人气推荐：0否 1是")
     private Integer isRecommend;
 
+    @ApiModelProperty(value = "是否助农商品：0否 1是")
+    private Integer isAidAgriculture;
+
     @ApiModelProperty(value = "商品详情HTML")
     private String detailHtml;
 
